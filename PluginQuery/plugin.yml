@@ -1,0 +1,20 @@
+name: PluginQuery
+author: Septogeddon
+version: 1.0
+main: septogeddon.pluginquery.spigot.SpigotPluginQuery
+description: Allows you to send plugin message between servers
+commands:
+   spigotpluginquery:
+      description: PluginQuery command for Spigot server
+      permission: pluginquery.admin
+      aliases:
+      - spq
+      - spquery
+      - spluginquery
+      - spigotpq
+      - spigotpluginq
+      - spigotpquery
+permissions:
+   pluginquery.admin:
+      description: Allows you to manage PluginQuery
+      default: op

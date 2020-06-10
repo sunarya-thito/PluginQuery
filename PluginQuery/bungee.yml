@@ -1,0 +1,5 @@
+name: PluginQueryBungeeCord
+version: 1.0
+author: Septogeddon
+main: septogeddon.pluginquery.bungeecord.BungeePluginQuery
+description: Allows you to send plugin message between servers

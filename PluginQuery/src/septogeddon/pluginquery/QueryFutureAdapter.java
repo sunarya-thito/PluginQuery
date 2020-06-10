@@ -1,0 +1,72 @@
+package septogeddon.pluginquery;
+
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
+
+import septogeddon.pluginquery.api.QueryFuture;
+import septogeddon.pluginquery.utils.QueryUtil;
+
+public abstract class QueryFutureAdapter<T> implements QueryFuture<T> {
+
+	private Set<Consumer<QueryFuture<T>>> listeners = ConcurrentHashMap.newKeySet();
+	private T result;
+	private Throwable cause;
+	private boolean done;
+	public void complete(T result) {
+		this.result = result;
+		done = true;
+		fireEvent();
+		listeners.clear();
+	}
+	
+	public void fireEvent() {
+		for (Consumer<QueryFuture<T>> listener : listeners) {
+			listener.accept(this);
+		}
+	}
+	
+	public void completeExceptionally(Throwable cause) {
+		this.cause = cause;
+		done = true;
+		fireEvent();
+		listeners.clear();
+	}
+	
+	@Override
+	public boolean isDone() {
+		return done;
+	}
+	
+	@Override
+	public boolean isSuccess() {
+		return cause == null;
+	}
+
+	@Override
+	public Throwable getCause() {
+		return cause;
+	}
+
+	@Override
+	public T getResult() {
+		return result;
+	}
+
+	@Override
+	public void addListener(Consumer<QueryFuture<T>> listener) {
+		QueryUtil.nonNull(listener, "listener");
+		if (done) {
+			listener.accept(this);
+		} else {
+			listeners.add(listener);
+		}
+	}
+
+	@Override
+	public void removeListener(Consumer<QueryFuture<T>> listener) {
+		QueryUtil.nonNull(listener, "listener");
+		listeners.remove(listener);
+	}
+	
+}
