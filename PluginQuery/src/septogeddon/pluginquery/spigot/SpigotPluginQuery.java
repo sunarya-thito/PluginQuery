@@ -148,6 +148,7 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
 				String configuredServerName = buffer.readUTF();
 				getLogger().log(Level.INFO, "BungeeCord version: "+bungeeCordVersion+" ("+connection.getAddress()+")");
 				getLogger().log(Level.INFO, "Configured server name: "+configuredServerName);
+				buffer.writeUTF(QueryContext.COMMAND_VERSION_CHECK);
 				buffer.writeUTF(getServer().getVersion());
 				buffer.writeUTF(configuredServerName);
 				connection.sendQuery(channel, buffer.toByteArray());
