@@ -26,7 +26,6 @@ public class QueryCompletableFuture<T> extends QueryFutureAdapter<T> {
 		try {
 			future.get();
 		} catch (Throwable t) {
-			QueryUtil.Throw(t);
 		}
 	}
 
