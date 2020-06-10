@@ -10,9 +10,9 @@ import septogeddon.pluginquery.utils.QueryUtil;
 public abstract class QueryFutureAdapter<T> implements QueryFuture<T> {
 
 	private Set<Consumer<QueryFuture<T>>> listeners = ConcurrentHashMap.newKeySet();
-	private T result;
-	private Throwable cause;
-	private boolean done;
+	protected T result;
+	protected Throwable cause;
+	protected boolean done;
 	public void complete(T result) {
 		this.result = result;
 		done = true;
