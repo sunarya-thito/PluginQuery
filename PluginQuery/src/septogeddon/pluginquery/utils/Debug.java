@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import septogeddon.pluginquery.PluginQuery;
 import septogeddon.pluginquery.api.QueryConnection;
+import septogeddon.pluginquery.api.QueryContext;
 import septogeddon.pluginquery.api.QueryFuture;
 import septogeddon.pluginquery.api.QueryMessenger;
 
@@ -17,7 +18,6 @@ public class Debug {
 	
 	public static void main(String[]args) throws Throwable {
 		PluginQuery.initializeDefaultMessenger();
-		AtomicInteger a = new AtomicInteger();
 		QueryMessenger messenger = PluginQuery.getMessenger();
 		QueryConnection connection = messenger.newConnection(new InetSocketAddress("localhost", 25565));
 		QueryFuture<QueryConnection> future = connection.connect();
@@ -36,13 +36,27 @@ public class Debug {
 				System.out.println("Disconnected!");
 			}
 		});
-		connection.getEventBus().registerListener((conn, channel, message)->{
-			System.out.println("received channel "+channel+" ("+a.incrementAndGet()+")");
-		});
-		for (int i = 0; i < 1; i++) {
-			connection.sendQuery("example:channel", "this is just a message".getBytes());
-//			Thread.sleep(1000);
+		QueuedQuery queue = new QueuedQuery(connection, QueryContext.PLUGIN_MESSAGING_CHANNEL);
+		AtomicInteger count = new AtomicInteger();
+		for (int i = 0; i < 1000; i++) {
+			DataBuffer buffer = new DataBuffer();
+			buffer.writeUTF(QueryContext.COMMAND_VERSION_CHECK);
+			buffer.writeUTF("Standalone non-bungee");
+			buffer.writeUTF("testServer");
+			QueryFuture<byte[]> bytes = queue.sendQuery(buffer.toByteArray());
+//			bytes.joinThread();
+			bytes.thenAccept(x->{
+				byte[] result = bytes.getResult();
+				DataBuffer buf = new DataBuffer(result);
+				String command = buf.readUTF();
+				if (QueryContext.COMMAND_VERSION_CHECK.equals(command)) {
+					String version = buf.readUTF();
+					String source = buf.readUTF();
+					debug(source+": "+version+" ("+count.getAndIncrement()+")");
+				}
+			});
 		}
+		debug("Done!");
 	}
 	
 }

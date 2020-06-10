@@ -1,10 +1,8 @@
 package septogeddon.pluginquery.utils;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.LinkedList;
+import java.util.Queue;
 
 import septogeddon.pluginquery.QueryCompletableFuture;
 import septogeddon.pluginquery.api.QueryConnection;
@@ -13,31 +11,25 @@ import septogeddon.pluginquery.api.QueryListener;
 
 public class QueuedQuery implements QueryListener {
 
-	private String salt = UUID.randomUUID().toString();
 	private QueryConnection connection;
-	private AtomicLong id = new AtomicLong();
-	private Map<Long,QueryCompletableFuture<byte[]>> futures = new ConcurrentHashMap<>();
 	private String channel;
+	private Queue<QueryCompletableFuture<byte[]>> queue = new LinkedList<>();
 	public QueuedQuery(QueryConnection conn, String channel) {
 		QueryUtil.nonNull(conn, "connection");
 		QueryUtil.nonNull(channel, "channel");
 		this.connection = conn;
+		this.connection.getEventBus().registerListener(this);
 		this.channel = channel;
 	}
 	
 	public QueryFuture<byte[]> sendQuery(byte[] message) {
 		QueryCompletableFuture<byte[]> future = new QueryCompletableFuture<>();
-		DataBuffer buffer = new DataBuffer();
-		long id = this.id.getAndIncrement();
-		buffer.writeUTF(salt);
-		buffer.writeLong(id);
-		buffer.write(message);
-		QueryFuture<QueryConnection> fut = connection.sendQuery(channel, buffer.toByteArray(), true);
+		QueryFuture<QueryConnection> fut = connection.sendQuery(channel, message, true);
+		if (!queue.add(future)) throw new IllegalStateException("failed to add queue");
 		fut.addListener(queryFuture->{
-			if (queryFuture.isSuccess()) {
-				futures.put(id, future);
-			} else {
+			if (!queryFuture.isSuccess()) {
 				future.completeExceptionally(queryFuture.getCause());
+				queue.remove(future);
 			}
 		});
 		return future;
@@ -46,9 +38,9 @@ public class QueuedQuery implements QueryListener {
 	@Override
 	public void onConnectionStateChange(QueryConnection connection) {
 		if (!connection.isConnected()) {
-			synchronized(futures) {
-				futures.forEach((key, value)->value.completeExceptionally(new IOException("connection closed")));
-				futures.clear();
+			synchronized(this.connection) {
+				QueryCompletableFuture<byte[]> que;
+				while ((que = queue.poll()) != null) que.completeExceptionally(new IOException("connection closed"));
 			}
 		}
 	}
@@ -56,22 +48,8 @@ public class QueuedQuery implements QueryListener {
 	@Override
 	public void onQueryReceived(QueryConnection connection, String channel, byte[] message) {
 		if (this.channel.equals(channel)) {
-			DataBuffer buffer = new DataBuffer(message);
-			QueryCompletableFuture<byte[]> future = null;
-			try {
-				String salt = buffer.readUTF();
-				if (!this.salt.equals(salt)) {
-					return;
-				}
-				long id = buffer.readLong();
-				future = futures.remove(id);
-			} catch (Throwable t) {
-				return;
-			}
-			byte[] originalMessage = buffer.toByteArray();
-			if (future != null) {
-				future.complete(originalMessage);
-			}
+			QueryCompletableFuture<byte[]> que = queue.poll();
+			if (que != null) que.complete(message);
 		}
 	}
 	
