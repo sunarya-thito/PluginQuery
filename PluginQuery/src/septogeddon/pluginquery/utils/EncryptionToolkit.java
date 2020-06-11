@@ -31,6 +31,15 @@ public class EncryptionToolkit {
 		return key;
 	}
 	
+	public byte[] encode() {
+		DataBuffer buffer = new DataBuffer();
+		String alg = key.getAlgorithm();
+		buffer.write(alg.length());
+		buffer.write(alg.getBytes());
+		buffer.write(getKey().getEncoded());
+		return buffer.toByteArray();
+	}
+	
 	public Cipher getEncryptor() {
 		return encryptor;
 	}

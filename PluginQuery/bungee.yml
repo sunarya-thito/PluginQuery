@@ -1,4 +1,4 @@
-name: PluginQueryBungeeCord
+name: PluginQuery
 version: 1.0
 author: Septogeddon
 main: septogeddon.pluginquery.bungeecord.BungeePluginQuery

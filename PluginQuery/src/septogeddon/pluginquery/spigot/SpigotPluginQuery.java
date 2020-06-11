@@ -4,15 +4,11 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.security.InvalidKeyException;
 import java.security.Key;
-import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
-
-import javax.crypto.NoSuchPaddingException;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -49,8 +45,6 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
 	private EncryptionToolkit encryption;
 	
 	public void onEnable() {
-		getServer().getMessenger().registerIncomingPluginChannel(this, QueryContext.PLUGIN_MESSAGING_CHANNEL, this);
-		getServer().getMessenger().registerOutgoingPluginChannel(this, QueryContext.PLUGIN_MESSAGING_CHANNEL);
 		PluginQuery.initializeDefaultMessenger();
 		reloadConfig();
 		QueryPipeline pipe = PluginQuery.getMessenger().getPipeline();
@@ -64,12 +58,19 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
 		}
 		register();
 		PluginQuery.getMessenger().getEventBus().registerListener(this);
+		getCommand("spigotpluginquery").setExecutor(new SpigotPluginQueryCommand(this));
 		getServer().getServicesManager()
 			.register(QueryMessenger.class, PluginQuery.getMessenger(), this, ServicePriority.Normal);
+		getLogger().log(Level.INFO, "Registering plugin channel: "+QueryContext.PLUGIN_MESSAGING_CHANNEL);
+		getServer().getMessenger().registerIncomingPluginChannel(this, QueryContext.PLUGIN_MESSAGING_CHANNEL, this);
+		getServer().getMessenger().registerOutgoingPluginChannel(this, QueryContext.PLUGIN_MESSAGING_CHANNEL);
 	}
 	
 	public void onDisable() {
 		unregister();
+		for (QueryConnection conn : PluginQuery.getMessenger().getActiveConnections()) {
+			conn.disconnect().joinThread();
+		}
 	}
 	
 	protected void register() {
@@ -114,11 +115,6 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
 		} catch (IOException e) {
 			getLogger().log(Level.SEVERE, "Failed to load config.yml", e);
 		}
-		messenger.getPipeline().remove(QueryContext.HANDLER_ENCRYPTOR);
-		messenger.getPipeline().remove(QueryContext.HANDLER_DECRYPTOR);
-		messenger.getPipeline().remove(QueryContext.HANDLER_LIMITER);
-		messenger.getPipeline().remove(QueryContext.HANDLER_WHITELIST);
-		messenger.getPipeline().remove(QueryContext.HANDLER_THROTTLE);
 		messenger.getMetadata().setData(QueryContext.METAKEY_MAX_RECONNECT_TRY, null);
 		messenger.getMetadata().setData(QueryContext.METAKEY_RECONNECT_DELAY, null);
 		List<String> whitelist = getQueryConfig().getOption(QueryContext.IP_WHITELIST);
@@ -162,6 +158,7 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
 				String configuredServerName = buffer.readUTF();
 				getLogger().log(Level.INFO, "BungeeCord version: "+bungeeCordVersion+" ("+connection.getAddress()+")");
 				getLogger().log(Level.INFO, "Configured server name: "+configuredServerName);
+				buffer.reset();
 				buffer.writeUTF(QueryContext.COMMAND_VERSION_CHECK);
 				buffer.writeUTF(getServer().getVersion());
 				buffer.writeUTF(configuredServerName);
@@ -176,7 +173,7 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
 		if (secret.exists()) {
 			try {
 				encryption = new EncryptionToolkit(EncryptionToolkit.readKey(secret));
-			} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | IOException e) {
+			} catch (Exception e) {
 				getLogger().log(Level.SEVERE, "Failed to load secret.key! Please delete it to generate a new one", e);
 			}
 		} else {
@@ -184,7 +181,7 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
 				Key generated = EncryptionToolkit.generateKey();
 				encryption = new EncryptionToolkit(generated);
 				encryption.writeKey(secret);
-			} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | IOException e) {
+			} catch (Exception e) {
 				getLogger().log(Level.SEVERE, "Failed to generate secret.key!", e);
 			}
 		}
@@ -194,8 +191,11 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
 					new QueryDecryptor(encryption.getDecryptor()),
 					new QueryEncryptor(encryption.getEncryptor()));
 		} else {
-			getLogger().log(Level.SEVERE, "Failed to register encryption! Will be disable this plugin for your safety.");
-			setEnabled(false);
+			getLogger().log(Level.SEVERE, "Failed to register encryption!.");
+		}
+		for (QueryConnection conn : PluginQuery.getMessenger().getActiveConnections()) {
+			getLogger().log(Level.INFO, "Disconnecting "+conn.getAddress());
+			conn.disconnect();
 		}
 	}
 	
@@ -206,21 +206,35 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
 			String command = buffer.readUTF();
 			if (QueryContext.REQUEST_KEY_SHARE.equals(command)) {
 				if (arg1 != null) {
-					if (arg1.hasPermission(QueryContext.ADMIN_PERMISSION)) {
-						byte[] keys = buffer.readBytes().getBytes();
-						try (FileOutputStream output = new FileOutputStream(new File(getDataFolder(), "secret.key"))) {
+					if (getQueryConfig().getOption(QueryContext.LOCK)) {
+						buffer.reset();
+						buffer.writeUTF(QueryContext.RESPONSE_LOCKED);
+					} else if (arg1.hasPermission(QueryContext.ADMIN_PERMISSION)) {
+						byte[] keys = buffer.toByteArray();
+						try {
+							FileOutputStream output = new FileOutputStream(new File(getDataFolder(), "secret.key"));
 							output.write(keys);
+							output.close();
 							reloadKey();
+							buffer.reset();
 							buffer.writeUTF(QueryContext.RESPONSE_SUCCESS);
 							// lock the synchronization
 							getQueryConfig().setOption(QueryContext.LOCK, true);
-							saveConfig();
+							try {
+								getQueryConfig().saveConfiguration(new File(getDataFolder(),"config.yml"));
+							} catch (IOException e) {
+								getLogger().log(Level.SEVERE, "Failed to save config", e);
+							}
 							//
+							getLogger().log(Level.INFO, "secret.key has been synchronized by player "+arg1.getName());
 						} catch (Throwable t) {
+							t.printStackTrace();
+							buffer.reset();
 							buffer.writeUTF(QueryContext.RESPONSE_ERROR);
 							buffer.writeUTF(t.toString());
 						}
 					} else {
+						buffer.reset();
 						buffer.writeUTF(QueryContext.RESPONSE_NO_PERMISSION);
 					}
 				}

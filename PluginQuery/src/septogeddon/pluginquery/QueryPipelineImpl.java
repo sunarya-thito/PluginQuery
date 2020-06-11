@@ -21,22 +21,22 @@ public class QueryPipelineImpl implements QueryPipeline {
 	}
 	@Override
 	public boolean remove(String str) {
-		for (int i = handlers.size()-1; i >= 0; i--) {
-			QueryChannelHandler current = handlers.get(i);
-			if (!current.getName().equals(str)) continue;
-			handlers.remove(i);
-			try {
-				current.onRemoved(this);
-			} catch (Exception e) {
-				dispatchUncaughtException(null, e);
+		return handlers.removeIf(handler->{
+			if (handler.getName().equals(str)) {
+				try {
+					handler.onRemoved(this);
+				} catch (Exception e) {
+					dispatchUncaughtException(null, e);
+				}
+				return true;
 			}
-		}
-		return false;
+			return false;
+		});
 	}
 
 	@Override
 	public boolean addFirst(QueryChannelHandler handler) {
-		if (checkExistance(handler)) return false;
+		remove(handler);
 		handlers.add(0, handler);
 		try {
 			handler.onAdded(this);
@@ -48,7 +48,7 @@ public class QueryPipelineImpl implements QueryPipeline {
 
 	@Override
 	public boolean addBefore(String before, QueryChannelHandler handler) {
-		if (checkExistance(handler)) return false;
+		remove(handler);
 		int index = findPos(before);
 		if (index < 0) return false;
 		handlers.add(index, handler);
@@ -62,7 +62,7 @@ public class QueryPipelineImpl implements QueryPipeline {
 
 	@Override
 	public boolean addAfter(String after, QueryChannelHandler handler) {
-		if (checkExistance(handler)) return false;
+		remove(handler);
 		int index = findPos(after);
 		if (index < 0) return false;
 		handlers.add(index + 1, handler);
@@ -76,7 +76,7 @@ public class QueryPipelineImpl implements QueryPipeline {
 
 	@Override
 	public boolean addLast(QueryChannelHandler handler) {
-		if (checkExistance(handler)) return false;
+		remove(handler);
 		handlers.add(handler);
 		try {
 			handler.onAdded(this);
@@ -86,10 +86,6 @@ public class QueryPipelineImpl implements QueryPipeline {
 		return true;
 	}
 	
-	public boolean checkExistance(QueryChannelHandler handler) {
-		return get(handler.getName()) != null;
-	}
-
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends QueryChannelHandler> T get(String key) {

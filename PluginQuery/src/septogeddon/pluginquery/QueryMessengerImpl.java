@@ -37,9 +37,27 @@ public class QueryMessengerImpl implements QueryMessenger {
 	}
 	@Override
 	public QueryConnection newConnection(SocketAddress address) {
-		QueryConnectionImpl conn = new QueryConnectionImpl(this, address, null);
+		QueryConnectionImpl conn = new QueryConnectionImpl(this, address, null) {
+			
+			@Override
+			protected void connectionDisconnected() {
+				synchronized (connections) {
+					connections.remove(this);
+				}
+				super.connectionDisconnected();
+			}
+			
+			@Override
+			protected void connectionConnected() {
+				super.connectionConnected();
+				synchronized (connections) {
+					connections.add(this);
+				}
+			}
+			
+		};
 		conn.getEventBus().addParent(getEventBus());
-		connections.add(conn);
+		conn.getMetadata().addParent(getMetadata());
 		return conn;
 	}
 
@@ -54,25 +72,33 @@ public class QueryMessengerImpl implements QueryMessenger {
 				}
 			}
 		}
-		QueryConnectionImpl conn = new QueryConnectionImpl(this, channel.remoteAddress(), channel);
+		QueryConnectionImpl conn = new QueryConnectionImpl(this, channel.remoteAddress(), channel) {
+			
+			@Override
+			protected void connectionDisconnected() {
+				synchronized (connections) {
+					connections.remove(this);
+				}
+				super.connectionDisconnected();
+			}
+			
+			@Override
+			protected void connectionConnected() {
+				super.connectionConnected();
+				synchronized (connections) {
+					connections.add(this);
+				}
+			}
+			
+		};
 		conn.getEventBus().addParent(getEventBus());
-		connections.add(conn);
+		conn.getMetadata().addParent(getMetadata());
 		return conn;
 	}
 
 	@Override
-	public Collection<? extends QueryConnection> getConnections() {
+	public Collection<? extends QueryConnection> getActiveConnections() {
 		return new ArrayList<>(connections);
-	}
-
-	@Override
-	public void broadcastQuery(String channel, byte[] message) {
-		synchronized (connections) {
-			for (int i = 0; i < connections.size(); i++) {
-				QueryConnection conn = connections.get(i);
-				conn.sendQuery(channel, message);
-			}
-		}
 	}
 
 	@Override
@@ -83,16 +109,6 @@ public class QueryMessengerImpl implements QueryMessenger {
 	@Override
 	public QueryEventBus getEventBus() {
 		return eventBus;
-	}
-
-	@Override
-	public void broadcastQuery(String channel, byte[] message, boolean queue) {
-		synchronized (connections) {
-			for (int i = 0; i < connections.size(); i++) {
-				QueryConnection conn = connections.get(i);
-				conn.sendQuery(channel, message, queue);
-			}
-		}
 	}
 
 	@Override
@@ -108,14 +124,4 @@ public class QueryMessengerImpl implements QueryMessenger {
 	public Class<? extends Channel> getChannelClass() {
 		return channelClass;
 	}
-	@Override
-	public void closeConnection(QueryConnection connection) {
-		if (connection.isConnected() || connection.isConnecting()) {
-			connection.disconnect();
-		}
-		synchronized(connections) {
-			connections.remove(connection);
-		}
-	}
-
 }

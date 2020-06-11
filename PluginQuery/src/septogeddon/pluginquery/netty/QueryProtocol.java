@@ -5,7 +5,6 @@ import septogeddon.pluginquery.api.QueryMessenger;
 
 public class QueryProtocol {
 
-	private QueryHandshaker handshaker;
 	private QueryManager manager;
 	private QueryEncoder encoder;
 	private QueryDecoder decoder;
@@ -29,7 +28,6 @@ public class QueryProtocol {
 	}
 	
 	public void clear() {
-		handshaker = null;
 		manager = null;
 		encoder = null;
 		decoder = null;
@@ -38,6 +36,8 @@ public class QueryProtocol {
 		appender = null;
 		splitter = null;
 	}
+	
+	public void onHandshaken() {}
 	
 	public QueryAppender getAppender() {
 		return appender == null ? appender = new QueryAppender() : appender;
@@ -59,10 +59,6 @@ public class QueryProtocol {
 		return manager == null ? manager = new QueryManager(this) : manager;
 	}
 	
-	public QueryHandshaker getHandshaker() {
-		return handshaker == null ? handshaker = new QueryHandshaker(this) : handshaker;
-	}
-
 	public QueryEncoder getEncoder() {
 		return encoder == null ? encoder = new QueryEncoder() : encoder;
 	}

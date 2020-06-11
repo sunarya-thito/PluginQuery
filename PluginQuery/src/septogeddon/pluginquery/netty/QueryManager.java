@@ -13,22 +13,18 @@ public class QueryManager extends SimpleChannelInboundHandler<QueryMessage> {
 	
 	@Override
 	protected void channelRead0(ChannelHandlerContext arg0, QueryMessage arg1) throws Exception {
-		protocol.getConnection().getEventBus().dispatch(protocol.getConnection(), arg1.getChannel(), arg1.getMessage());
+		protocol.getConnection().getEventBus().dispatchMessage(protocol.getConnection(), arg1.getChannel(), arg1.getMessage());
 	}
 	
 	@Override
 	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 		super.channelInactive(ctx);
-		// channel disconnected
-		protocol.getMessenger().getPipeline().dispatchInactive(protocol.getConnection());
-		protocol.getConnection().getEventBus().dispatch(protocol.getConnection());
-		// side note:
-		// "channel connected" handling
-		// is at QueryConnection#prepareChannel
+		protocol.getConnection().disconnect();
 	}
 	
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+		cause.printStackTrace();
 	}
 
 }

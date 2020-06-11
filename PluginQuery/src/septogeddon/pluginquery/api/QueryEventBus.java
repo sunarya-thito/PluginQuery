@@ -16,14 +16,14 @@ public interface QueryEventBus {
 	 * Dispatch a Connection State change event
 	 * @param connection
 	 */
-	public void dispatch(QueryConnection connection);
+	public void dispatchConnectionState(QueryConnection connection);
 	/***
 	 * Dispatch a Query Message received event
 	 * @param connection
 	 * @param channel
 	 * @param message
 	 */
-	public void dispatch(QueryConnection connection, String channel, byte[] message);
+	public void dispatchMessage(QueryConnection connection, String channel, byte[] message);
 	/***
 	 * Register a listener
 	 * @param listener

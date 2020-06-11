@@ -3,6 +3,7 @@ package septogeddon.pluginquery;
 import java.net.SocketAddress;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import io.netty.bootstrap.Bootstrap;
@@ -19,6 +20,7 @@ import septogeddon.pluginquery.api.QueryEventBus;
 import septogeddon.pluginquery.api.QueryFuture;
 import septogeddon.pluginquery.api.QueryMessenger;
 import septogeddon.pluginquery.api.QueryMetadata;
+import septogeddon.pluginquery.netty.QueryHandshaker;
 import septogeddon.pluginquery.netty.QueryProtocol;
 import septogeddon.pluginquery.utils.QueryUtil;
 
@@ -36,31 +38,41 @@ public class QueryConnectionImpl implements QueryConnection {
 		this.messenger = messenger;
 		this.address = address;
 		this.channel = channel;
-		this.protocol = new QueryProtocol(messenger, this);
-		prepareChannel();
+		this.protocol = new QueryProtocol(messenger, this) {
+			@Override
+			public void onHandshaken() {
+				connectionConnected();
+				super.onHandshaken();
+			}
+		};
+		prepareChannel(null);
 	}
 	
 	// from constructor
-	protected void prepareChannel() {
-		if (isConnected()) {
+	protected void prepareChannel(QueryCompletableFuture<QueryConnection> conn) {
+		if (channel != null) {
+			connecting = true;
 			getChannel().pipeline().addFirst(
-					protocol.getHandshaker()
+					new QueryHandshaker(protocol,conn)
 					);
-			getMessenger().getPipeline().dispatchActive(this);
-			getEventBus().dispatch(this);
-			flushQueue();
 		}
 	}
 	
-	// from #connect
-	protected void prepareConnection() {
-		handshakenConnection(protocol, getChannel().pipeline());
+	protected void connectionDisconnected() {
+		getMessenger().getPipeline().dispatchInactive(this);
+		getEventBus().dispatchConnectionState(this);
+	}
+	
+	protected void connectionConnected() {
+		connecting = false;
 		getMessenger().getPipeline().dispatchActive(this);
-		getEventBus().dispatch(this);
+		getEventBus().dispatchConnectionState(this);
 		flushQueue();
 	}
 	
 	public static void handshakenConnection(QueryProtocol protocol, ChannelPipeline pipeline) {
+		// RESET ALL INSTANCES
+		protocol.clear();
 		
 		// INBOUND 
 		// read order from top to down
@@ -85,6 +97,7 @@ public class QueryConnectionImpl implements QueryConnection {
 		
 		// manage incoming Query Message
 		pipeline.addLast(protocol.getManager());
+		protocol.onHandshaken();
 	}
 	
 	@Override
@@ -97,23 +110,43 @@ public class QueryConnectionImpl implements QueryConnection {
 		return messenger;
 	}
 	
-	public void handshake(QueryCompletableFuture<QueryConnection> future) {
+	public void handshake(QueryCompletableFuture<QueryConnection> future, int currentTime) {
 		ByteBuf buf = getChannel().alloc().heapBuffer();
 		buf.writeInt(QueryContext.PACKET_HANDSHAKE.length());
 		buf.writeBytes(QueryContext.PACKET_HANDSHAKE.getBytes());
-		byte[] handshake = QueryContext.HANDSHAKE_UNIQUE.getBytes();
+		UUID randomized = UUID.randomUUID();
+		buf.writeLong(randomized.getMostSignificantBits());
+		buf.writeLong(randomized.getLeastSignificantBits());
+		String uuid = randomized.toString();
+		byte[] handshake = uuid.getBytes();
 		handshake = getMessenger().getPipeline().dispatchSending(this, handshake);
 		if (handshake == null) handshake = new byte[0];
 		buf.writeInt(handshake.length);
 		buf.writeBytes(handshake);
+		buf.writeBoolean(true);
 		ChannelFuture fut = getChannel().writeAndFlush(buf);
 		fut.addListener((ChannelFuture f)->{
-			connecting = false;
-			if (f.isSuccess()) {
-				future.complete(this);
-				prepareConnection();
-			} else {
-				future.completeExceptionally(f.cause());
+			Throwable cause = f.cause();
+			if (!f.channel().isOpen() || (cause == null && !f.isSuccess())) {
+				cause = new IllegalStateException("connection closed");
+			}
+			if (cause != null) {
+				connecting = false;
+				getMessenger().getPipeline().dispatchUncaughtException(this, f.cause());
+				long reconnectDelay = getMetadata().getData(QueryContext.METAKEY_RECONNECT_DELAY, -1L);
+				if (reconnectDelay >= 0) {
+					int maxTime = getMetadata().getData(QueryContext.METAKEY_MAX_RECONNECT_TRY, 0);
+					if (maxTime >= 0 && currentTime + 1 > maxTime) {
+						future.completeExceptionally(cause);
+						return;
+					}
+					fut.channel().eventLoop().schedule(()->{
+						connect(currentTime + 1);
+					}, reconnectDelay, TimeUnit.MILLISECONDS);
+				} else {
+					future.completeExceptionally(cause);
+				}
+				future.completeExceptionally(cause);
 				if (f.channel().isOpen()) {
 					f.channel().close();
 				}
@@ -127,10 +160,10 @@ public class QueryConnectionImpl implements QueryConnection {
 	}
 	
 	public QueryFuture<QueryConnection> connect(int currentTime) {
-		QueryUtil.illegalState(!getMessenger().getConnections().contains(this), "not registered connection");
 		QueryUtil.illegalState(isConnecting(), "already connecting");
 		QueryUtil.illegalState(isConnected(), "already connected");
 		connecting = true;
+		QueryCompletableFuture<QueryConnection> fut = new QueryCompletableFuture<>();
 		Bootstrap client = new Bootstrap();
 		client.group(getMessenger().getEventLoopGroup());
 		client.channel(getMessenger().getChannelClass());
@@ -140,7 +173,6 @@ public class QueryConnectionImpl implements QueryConnection {
 		client.handler(new ChannelDuplexHandler());
 		client.remoteAddress(address);
 		ChannelFuture future = client.connect();
-		QueryCompletableFuture<QueryConnection> fut = new QueryCompletableFuture<>();
 		future.addListener((ChannelFuture f)->{
 			if (!f.isSuccess()) {
 				connecting = false;
@@ -160,28 +192,47 @@ public class QueryConnectionImpl implements QueryConnection {
 				}
 			} else {
 				channel = f.channel();
-				handshake(fut);
+				prepareChannel(fut);
+				handshake(fut, currentTime);
 			}
 		});
 		return fut;
 	}
 	
 	public void flushQueue() {
-		synchronized (queues) {
-			QueueQuery queue;
-			while ((queue = queues.poll()) != null) sendPrivately(queue);
+		if (channel != null && !channel.eventLoop().inEventLoop()) {
+			channel.eventLoop().submit(()->{
+				synchronized (queues) {
+					QueueQuery queue;
+					while ((queue = queues.poll()) != null) sendPrivately(queue);
+				}
+			});
+		} else {
+			synchronized (queues) {
+				QueueQuery queue;
+				while ((queue = queues.poll()) != null) sendPrivately(queue);
+			}
 		}
 	}
 
 	@Override
 	public QueryFuture<QueryConnection> disconnect() {
-		QueryUtil.illegalState(!isConnected() && !isConnecting(), "not connected");
-		ChannelFuture future = channel.close();
-		future.addListener((ChannelFuture f)->{
+		connecting = false;
+		ChannelFuture future;
+		if (channel != null) {
+			if (channel.isOpen()) {
+				future = channel.close();
+			} else future = null;
 			queues.clear();
 			protocol.clear();
-		});
+			connectionDisconnected();
+			channel = null;
+		} else future = null;
 		return new QueryChannelFuture<>(future, this);
+	}
+	
+	public void finalize() {
+		disconnect();
 	}
 
 	@Override
@@ -228,6 +279,7 @@ public class QueryConnectionImpl implements QueryConnection {
 				if (f.isSuccess()) {
 					a.future.complete(this);
 				} else {
+					f.cause().printStackTrace();
 					a.future.completeExceptionally(f.cause());
 				}
 			};

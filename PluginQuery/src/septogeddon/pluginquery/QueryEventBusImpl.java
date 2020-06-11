@@ -37,7 +37,7 @@ public class QueryEventBusImpl implements QueryEventBus {
 	}
 
 	@Override
-	public void dispatch(QueryConnection connection, String channel, byte[] message) {
+	public void dispatchMessage(QueryConnection connection, String channel, byte[] message) {
 		for (QueryListener listener : listeners) {
 			try {
 				listener.onQueryReceived(connection, channel, message);
@@ -46,12 +46,13 @@ public class QueryEventBusImpl implements QueryEventBus {
 			}
 		}
 		for (QueryEventBus parent : parents) {
-			parent.dispatch(connection, channel, message);
+			parent.dispatchMessage(connection, channel, message);
 		}
 	}
 
 	@Override
-	public void dispatch(QueryConnection connection) {
+	public void dispatchConnectionState(QueryConnection connection) {
+		if (connection.isConnecting()) return;
 		for (QueryListener listener : listeners) {
 			try {
 				listener.onConnectionStateChange(connection);
@@ -60,7 +61,7 @@ public class QueryEventBusImpl implements QueryEventBus {
 			}
 		}
 		for (QueryEventBus parent : parents) {
-			parent.dispatch(connection);
+			parent.dispatchConnectionState(connection);
 		}
 	}
 

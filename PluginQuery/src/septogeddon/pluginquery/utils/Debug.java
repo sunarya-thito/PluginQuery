@@ -60,28 +60,7 @@ public class Debug {
 				debug(source+": "+version+" ("+count.getAndIncrement()+"/"+failCount.get()+")");
 			}
 		});
-		Debug.debug("waiting to connect");
-		future.joinThread();
-		Debug.debug("CONNECTED");
-		for (int i = 0; i < 500; i++) {
-			DataBuffer buffer = new DataBuffer();
-			buffer.writeUTF(QueryContext.COMMAND_VERSION_CHECK);
-			buffer.writeUTF("Standalone non-bungee");
-			buffer.writeUTF("testServer");
-			QueryFuture<QueryConnection> bytes = connection.sendQuery(QueryContext.PLUGIN_MESSAGING_CHANNEL, buffer.toByteArray());
-			bytes.addListener(futured->{
-				if (!futured.isSuccess()) {
-					futured.getCause().printStackTrace();
-					failCount.getAndIncrement();
-				}
-			});
-		}
-		Debug.debug("disconnecting...");
-		connection.disconnect().joinThread();
-		Debug.debug("disconnected, reconnecting...");
-		connection.connect().joinThread();
-		Debug.debug("connected");
-		for (int i = 0; i < 500; i++) {
+		for (int i = 0; i < 5; i++) {
 			DataBuffer buffer = new DataBuffer();
 			buffer.writeUTF(QueryContext.COMMAND_VERSION_CHECK);
 			buffer.writeUTF("Standalone non-bungee");

@@ -16,11 +16,14 @@ public interface QueryContext {
 	public static final String HANDLER_WHITELIST = "query_whitelist";
 	public static final String HANDLER_THROTTLE = "query_throttle";
 	
-	public static final String PLUGIN_MESSAGING_CHANNEL = "plugin:query";
+	public static final String PLUGIN_MESSAGING_CHANNEL = "pluginquery:query";
 	public static final String REQUEST_KEY_SHARE = "keyShare";
 	public static final String RESPONSE_NO_PERMISSION = "noPermission";
+	public static final String RESPONSE_LOCKED = "locked";
 	public static final String RESPONSE_SUCCESS = "success";
 	public static final String RESPONSE_ERROR = "error";
+	
+	public static final String COMMAND_PREFIX = "&8[&bPluginQuery&8] &7";
 	
 	public static final String ADMIN_PERMISSION = "pluginquery.admin";
 	

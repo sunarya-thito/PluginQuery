@@ -174,6 +174,10 @@ public class DataBuffer implements DataInput, DataOutput {
 		if (minCapacity - buf.length > 0)
 			grow(minCapacity);
 	}
+	
+	public void reset() {
+		pos = count = 0;
+	}
 
 	private void grow(int minCapacity) {
 		count -= pos;
@@ -368,7 +372,7 @@ public class DataBuffer implements DataInput, DataOutput {
 	}
 
 	public synchronized byte toByteArray()[] {
-		return Arrays.copyOf(buf, count);
+		return Arrays.copyOfRange(buf, pos, count);
 	}
 
 	public synchronized void write(byte b[], int off, int len) {

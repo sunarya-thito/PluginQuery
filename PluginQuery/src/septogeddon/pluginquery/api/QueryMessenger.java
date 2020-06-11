@@ -21,30 +21,10 @@ public interface QueryMessenger {
 	 */
 	public QueryConnection injectConnection(Channel channel);
 	/***
-	 * Disconnect and remove this connection from the connection pool and execute {@link QueryConnection#disconnect()}
-	 * @param connection
-	 */
-	public void closeConnection(QueryConnection connection);
-	/***
 	 * Get all connections (including inactive connections)
 	 * @return
 	 */
-	public Collection<? extends QueryConnection> getConnections();
-	/***
-	 * Broadcast a message to all available connections
-	 * @see QueryConnection#sendQuery(String, byte[])
-	 * @param channel
-	 * @param message
-	 */
-	public void broadcastQuery(String channel, byte[] message);
-	/***
-	 * Broadcast a message to all available connections
-	 * @see QueryConnection#sendQuery(String, byte[], boolean)
-	 * @param channel
-	 * @param message
-	 * @param queue
-	 */
-	public void broadcastQuery(String channel, byte[] message, boolean queue);
+	public Collection<? extends QueryConnection> getActiveConnections();
 	/***
 	 * Get Messenger metadata
 	 * @return

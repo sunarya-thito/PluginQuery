@@ -19,5 +19,5 @@ public class QueryEncryptor extends QueryChannelHandler {
 		bytes = cipher.doFinal(bytes);
 		return super.onSending(connection, bytes);
 	}
-
+	
 }
