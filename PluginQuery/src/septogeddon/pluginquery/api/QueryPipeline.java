@@ -1,5 +1,7 @@
 package septogeddon.pluginquery.api;
 
+import java.util.Collection;
+
 import septogeddon.pluginquery.QueryChannelHandler;
 
 public interface QueryPipeline {
@@ -12,6 +14,9 @@ public interface QueryPipeline {
 	public boolean addBefore(String before, QueryChannelHandler handler);
 	public boolean addAfter(String after, QueryChannelHandler handler);
 	public boolean addLast(QueryChannelHandler handler);
+	public QueryChannelHandler nextHandler(QueryChannelHandler of);
+	public QueryChannelHandler first();
+	public QueryChannelHandler last();
 	public default boolean addLast(QueryChannelHandler... handlers) {
 		boolean added = false;
 		for (QueryChannelHandler handler : handlers) {
@@ -29,6 +34,7 @@ public interface QueryPipeline {
 		return added;
 	}
 	public <T extends QueryChannelHandler> T get(String key);
+	public Collection<? extends QueryChannelHandler> getPipes();
 	public void dispatchActive(QueryConnection connection);
 	public void dispatchInactive(QueryConnection connection);
 	public byte[] dispatchSending(QueryConnection connection, byte[] bytes);

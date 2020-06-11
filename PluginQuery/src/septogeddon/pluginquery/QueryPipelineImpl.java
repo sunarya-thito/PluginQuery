@@ -1,44 +1,43 @@
 package septogeddon.pluginquery;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
 import septogeddon.pluginquery.api.QueryConnection;
 import septogeddon.pluginquery.api.QueryPipeline;
 import septogeddon.pluginquery.utils.QueryUtil;
 
 public class QueryPipelineImpl implements QueryPipeline {
 
-	private QueryChannelHandler root;
-	
-	public QueryChannelHandler findPosition(String name) {
-		QueryChannelHandler now = root;
-		while (now != null && !now.getName().equals(name)) {
-			now = now.child;
+	private ArrayList<QueryChannelHandler> handlers = new ArrayList<>();
+	public int findPos(String s) {
+		for (int i = 0; i < handlers.size(); i++) {
+			QueryChannelHandler hand = handlers.get(i);
+			if (hand.getName().equals(s)) {
+				return i;
+			}
 		}
-		return now != null && !now.getName().equals(name) ? null : now;
+		return -1;
 	}
-
 	@Override
 	public boolean remove(String str) {
-		QueryChannelHandler current = findPosition(str);
-		if (current == null) return false;
-		if (current == root) {
-			root = current.child;
-		} else {
-			current.parent.child = current.child;
+		for (int i = handlers.size()-1; i >= 0; i--) {
+			QueryChannelHandler current = handlers.get(i);
+			if (!current.getName().equals(str)) continue;
+			handlers.remove(i);
+			try {
+				current.onRemoved(this);
+			} catch (Exception e) {
+				dispatchUncaughtException(null, e);
+			}
 		}
-		try {
-			current.onRemoved(this);
-		} catch (Exception e) {
-			dispatchUncaughtException(null, e);
-		}
-		return true;
+		return false;
 	}
 
 	@Override
 	public boolean addFirst(QueryChannelHandler handler) {
 		if (checkExistance(handler)) return false;
-		if (root != null) root.child = handler;
-		root = handler;
-		handler.parent = root;
+		handlers.add(0, handler);
 		try {
 			handler.onAdded(this);
 		} catch (Exception e) {
@@ -50,16 +49,9 @@ public class QueryPipelineImpl implements QueryPipeline {
 	@Override
 	public boolean addBefore(String before, QueryChannelHandler handler) {
 		if (checkExistance(handler)) return false;
-		QueryChannelHandler current = findPosition(before);
-		if (current == null) return false;
-		if (current.parent == null) {
-			root = handler;
-		} else {
-			current.parent.child = handler;
-		}
-		handler.parent = current.parent;
-		handler.child = current;
-		current.parent = handler;
+		int index = findPos(before);
+		if (index < 0) return false;
+		handlers.add(index, handler);
 		try {
 			handler.onAdded(this);
 		} catch (Exception e) {
@@ -71,12 +63,9 @@ public class QueryPipelineImpl implements QueryPipeline {
 	@Override
 	public boolean addAfter(String after, QueryChannelHandler handler) {
 		if (checkExistance(handler)) return false;
-		QueryChannelHandler current = findPosition(after);
-		if (current == null) return false;
-		current.child.parent = handler;
-		handler.child = current.child;
-		handler.parent = current;
-		current.child = handler;
+		int index = findPos(after);
+		if (index < 0) return false;
+		handlers.add(index + 1, handler);
 		try {
 			handler.onAdded(this);
 		} catch (Exception e) {
@@ -88,16 +77,7 @@ public class QueryPipelineImpl implements QueryPipeline {
 	@Override
 	public boolean addLast(QueryChannelHandler handler) {
 		if (checkExistance(handler)) return false;
-		if (root == null) {
-			root = handler;
-		} else {
-			QueryChannelHandler now = root;
-			while (now.child != null) {
-				now = now.child;
-			}
-			now.child = handler;
-			handler.parent = now;
-		}
+		handlers.add(handler);
 		try {
 			handler.onAdded(this);
 		} catch (Exception e) {
@@ -113,14 +93,15 @@ public class QueryPipelineImpl implements QueryPipeline {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends QueryChannelHandler> T get(String key) {
-		return (T)findPosition(key);
+		int index = findPos(key);
+		return index < 0 ? null : (T)handlers.get(index);
 	}
 	
 	@Override
 	public void dispatchActive(QueryConnection connection) {
-		if (root != null) {
+		if (!handlers.isEmpty()) {
 			try {
-				root.onActive(connection);
+				handlers.get(0).onActive(connection);
 			} catch (Exception e) {
 				dispatchUncaughtException(connection, e);
 			}
@@ -129,9 +110,9 @@ public class QueryPipelineImpl implements QueryPipeline {
 
 	@Override
 	public void dispatchInactive(QueryConnection connection) {
-		if (root != null) {
+		if (!handlers.isEmpty()) {
 			try {
-				root.onInactive(connection);
+				handlers.get(0).onInactive(connection);
 			} catch (Exception e) {
 				dispatchUncaughtException(connection, e);
 			}
@@ -140,9 +121,9 @@ public class QueryPipelineImpl implements QueryPipeline {
 
 	@Override
 	public byte[] dispatchSending(QueryConnection connection, byte[] bytes) {
-		if (root != null) {
+		if (!handlers.isEmpty()) {
 			try {
-				bytes = root.onSending(connection, bytes);
+				bytes = handlers.get(0).onSending(connection, bytes);
 				QueryUtil.nonNull(bytes, "bytes");
 			} catch (Exception e) {
 				dispatchUncaughtException(connection, e);
@@ -153,9 +134,9 @@ public class QueryPipelineImpl implements QueryPipeline {
 
 	@Override
 	public byte[] dispatchReceiving(QueryConnection connection, byte[] bytes) {
-		if (root != null) {
+		if (!handlers.isEmpty()) {
 			try {
-				bytes = root.onReceiving(connection, bytes);
+				bytes = handlers.get(0).onReceiving(connection, bytes);
 				QueryUtil.nonNull(bytes, "bytes");
 			} catch (Exception e) {
 				dispatchUncaughtException(connection, e);
@@ -166,13 +147,30 @@ public class QueryPipelineImpl implements QueryPipeline {
 
 	@Override
 	public void dispatchUncaughtException(QueryConnection connection, Throwable thrown) {
-		if (root != null) {
+		if (!handlers.isEmpty()) {
 			try {
-				root.onUncaughtException(connection, thrown);
+				handlers.get(0).onCaughtException(connection, thrown);
 			} catch (Throwable e) {
-				QueryUtil.Throw(e);
+				e.printStackTrace();
 			}
-		}
+		} else thrown.printStackTrace();
+	}
+	@Override
+	public QueryChannelHandler nextHandler(QueryChannelHandler of) {
+		int pos = handlers.indexOf(of);
+		return pos + 1 >= handlers.size() ? null : handlers.get(pos + 1);
+	}
+	@Override
+	public QueryChannelHandler first() {
+		return handlers.isEmpty() ? null : handlers.get(0);
+	}
+	@Override
+	public QueryChannelHandler last() {
+		return handlers.isEmpty() ? null : handlers.get(handlers.size()-1);
+	}
+	@Override
+	public Collection<? extends QueryChannelHandler> getPipes() {
+		return new ArrayList<>(handlers);
 	}
 
 }

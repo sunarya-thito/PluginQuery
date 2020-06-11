@@ -29,7 +29,11 @@ import septogeddon.pluginquery.api.QueryConnection;
 import septogeddon.pluginquery.api.QueryContext;
 import septogeddon.pluginquery.api.QueryMessageListener;
 import septogeddon.pluginquery.api.QueryMessenger;
+import septogeddon.pluginquery.api.QueryPipeline;
+import septogeddon.pluginquery.channel.QueryDecryptor;
+import septogeddon.pluginquery.channel.QueryDeflater;
 import septogeddon.pluginquery.channel.QueryEncryptor;
+import septogeddon.pluginquery.channel.QueryInflater;
 import septogeddon.pluginquery.channel.QueryLimiter;
 import septogeddon.pluginquery.channel.QueryThrottle;
 import septogeddon.pluginquery.channel.QueryWhitelist;
@@ -48,6 +52,16 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
 		getServer().getMessenger().registerIncomingPluginChannel(this, QueryContext.PLUGIN_MESSAGING_CHANNEL, this);
 		getServer().getMessenger().registerOutgoingPluginChannel(this, QueryContext.PLUGIN_MESSAGING_CHANNEL);
 		PluginQuery.initializeDefaultMessenger();
+		reloadConfig();
+		QueryPipeline pipe = PluginQuery.getMessenger().getPipeline();
+		QueryDeflater deflater = new QueryDeflater();
+		QueryInflater inflater = new QueryInflater();
+		if (pipe.addBefore(QueryContext.HANDLER_ENCRYPTOR, deflater)) {
+			pipe.addLast(deflater);
+		}
+		if (pipe.addAfter(QueryContext.HANDLER_DECRYPTOR, inflater)) {
+			pipe.addFirst(inflater);
+		}
 		register();
 		PluginQuery.getMessenger().getEventBus().registerListener(this);
 		getServer().getServicesManager()
@@ -107,14 +121,13 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
 		messenger.getPipeline().remove(QueryContext.HANDLER_THROTTLE);
 		messenger.getMetadata().setData(QueryContext.METAKEY_MAX_RECONNECT_TRY, null);
 		messenger.getMetadata().setData(QueryContext.METAKEY_RECONNECT_DELAY, null);
-		reloadKey();
 		List<String> whitelist = getQueryConfig().getOption(QueryContext.IP_WHITELIST);
 		if (whitelist != null && !whitelist.isEmpty()) {
-			messenger.getPipeline().addFirst(new QueryWhitelist(whitelist));
+			messenger.getPipeline().addLast(new QueryWhitelist(whitelist));
 		}
 		long throttle = getQueryConfig().getOption(QueryContext.CONNECTION_THROTTLE).longValue();
 		if (throttle > 0) {
-			messenger.getPipeline().addFirst(new QueryThrottle(throttle));
+			messenger.getPipeline().addLast(new QueryThrottle(throttle));
 		}
 		long reconnectDelay = getQueryConfig().getOption(QueryContext.RECONNECT_DELAY).longValue();
 		if (reconnectDelay > 0) {
@@ -122,10 +135,11 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
 		}
 		int maxConnection = getQueryConfig().getOption(QueryContext.CONNECTION_LIMIT).intValue();
 		if (maxConnection >= 0) {
-			messenger.getPipeline().addFirst(new QueryLimiter(maxConnection));
+			messenger.getPipeline().addLast(new QueryLimiter(maxConnection));
 		}
 		int maxReconnectTry = getQueryConfig().getOption(QueryContext.MAX_RECONNECT_TRY).intValue();
 		messenger.getMetadata().setData(QueryContext.METAKEY_MAX_RECONNECT_TRY, maxReconnectTry);
+		reloadKey();
 	}
 	
 	protected void unregister() {
@@ -169,14 +183,16 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
 			try {
 				Key generated = EncryptionToolkit.generateKey();
 				encryption = new EncryptionToolkit(generated);
-			} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException e) {
+				encryption.writeKey(secret);
+			} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | IOException e) {
 				getLogger().log(Level.SEVERE, "Failed to generate secret.key!", e);
 			}
 		}
 		if (encryption != null) {
-			PluginQuery.getMessenger().getPipeline().addFirst(
-					new QueryEncryptor(encryption.getEncryptor()),
-					new QueryEncryptor(encryption.getDecryptor()));
+			getLogger().log(Level.INFO, "Using encryption algorithm: "+encryption.getKey().getAlgorithm());
+			PluginQuery.getMessenger().getPipeline().addLast(
+					new QueryDecryptor(encryption.getDecryptor()),
+					new QueryEncryptor(encryption.getEncryptor()));
 		} else {
 			getLogger().log(Level.SEVERE, "Failed to register encryption! Will be disable this plugin for your safety.");
 			setEnabled(false);

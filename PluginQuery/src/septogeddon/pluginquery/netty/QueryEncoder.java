@@ -15,4 +15,8 @@ public class QueryEncoder extends MessageToByteEncoder<QueryMessage> {
 		arg2.writeBytes(arg1.getMessage());
 	}
 	
+	@Override
+	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+	}
+	
 }

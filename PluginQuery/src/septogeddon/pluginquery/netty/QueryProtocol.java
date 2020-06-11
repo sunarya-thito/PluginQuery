@@ -28,6 +28,17 @@ public class QueryProtocol {
 		return connection;
 	}
 	
+	public void clear() {
+		handshaker = null;
+		manager = null;
+		encoder = null;
+		decoder = null;
+		pipein = null;
+		pipeout = null;
+		appender = null;
+		splitter = null;
+	}
+	
 	public QueryAppender getAppender() {
 		return appender == null ? appender = new QueryAppender() : appender;
 	}

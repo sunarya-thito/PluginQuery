@@ -110,7 +110,7 @@ public class QueryMessengerImpl implements QueryMessenger {
 	}
 	@Override
 	public void closeConnection(QueryConnection connection) {
-		if (connection.isConnected()) {
+		if (connection.isConnected() || connection.isConnecting()) {
 			connection.disconnect();
 		}
 		synchronized(connections) {

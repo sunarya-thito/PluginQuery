@@ -9,8 +9,10 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 
 public class QueryAppender extends ByteToMessageDecoder {
+	
 	@Override
 	protected void decode(final ChannelHandlerContext ctx, final ByteBuf in, final List<Object> out) throws Exception {
+		if (in.readableBytes() <= 0) return;
 		in.markReaderIndex();
 		final byte[] buf = new byte[3];
 		int i = 0;

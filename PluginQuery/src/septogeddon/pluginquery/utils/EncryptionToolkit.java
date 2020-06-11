@@ -53,6 +53,7 @@ public class EncryptionToolkit {
 			// wtf is an algorithm with 10000 length of string??
 			output.write(alg.length());
 			output.write(alg.getBytes());
+			output.write(getKey().getEncoded());
 		}
 	}
 	

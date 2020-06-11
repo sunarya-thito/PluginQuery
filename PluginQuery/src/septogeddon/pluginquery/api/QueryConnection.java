@@ -40,7 +40,7 @@ public interface QueryConnection {
 	 * Disconnect the connection. Won't get removed from connection pool, allows you to re-use this connection.
 	 * @see QueryMessenger#closeConnection(QueryConnection)
 	 */
-	public void disconnect();
+	public QueryFuture<QueryConnection> disconnect();
 	/***
 	 * Metadata Storage
 	 * @return

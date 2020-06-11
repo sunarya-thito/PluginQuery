@@ -16,8 +16,10 @@ public class QueryPipelineInbound extends ByteToMessageDecoder {
 		this.pipeline = pipeline;
 		this.connection = connection;
 	}
+	
 	@Override
 	protected void decode(ChannelHandlerContext arg0, ByteBuf arg1, List<Object> arg2) throws Exception {
+		if (arg1.readableBytes() <= 0) return;
 		byte[] bytes = new byte[arg1.readableBytes()];
 		arg1.readBytes(bytes, 0, bytes.length);
 		bytes = pipeline.dispatchReceiving(connection, bytes);

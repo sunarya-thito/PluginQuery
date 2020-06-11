@@ -4,6 +4,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
+import septogeddon.pluginquery.QueryConnectionImpl;
 import septogeddon.pluginquery.api.QueryContext;
 
 public class QueryHandshaker extends ChannelDuplexHandler {
@@ -33,21 +34,15 @@ public class QueryHandshaker extends ChannelDuplexHandler {
 						buf.readBytes(bytes);
 						try {
 							bytes = protocol.getMessenger().getPipeline().dispatchReceiving(protocol.getConnection(), bytes);
-							// remove minecraft packet handlers and this handler
-							// in this process, read timeout also removed
-							// we don't use read timeout, keep it open as long as possible
-							pipe.forEach(entry->pipe.remove(entry.getKey()));
-							// initialize query channel
-							pipe.addLast(
-									new QueryAppender(),
-									new QuerySplitter(),
-									protocol.getPipelineInbound(),
-									protocol.getDecoder(),
-									protocol.getManager(),
-									protocol.getEncoder(),
-									protocol.getPipelineOutbound()
-									);
-							return;
+							if (new String(bytes).equals(QueryContext.HANDSHAKE_UNIQUE)) {
+								// remove minecraft packet handlers and this handler
+								// in this process, read timeout also removed
+								// we don't use read timeout, keep it open as long as possible
+								pipe.forEach(entry->pipe.remove(entry.getKey()));
+								// initialize query channel
+								QueryConnectionImpl.handshakenConnection(protocol, pipe);
+								return;
+							}
 						} catch (Throwable t) {
 							flag = true;
 						}

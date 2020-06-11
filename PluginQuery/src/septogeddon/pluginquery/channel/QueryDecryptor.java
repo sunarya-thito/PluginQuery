@@ -1,8 +1,6 @@
 package septogeddon.pluginquery.channel;
 
-import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
 
 import septogeddon.pluginquery.QueryChannelHandler;
 import septogeddon.pluginquery.api.QueryConnection;
@@ -19,16 +17,11 @@ public class QueryDecryptor extends QueryChannelHandler {
 	@Override
 	public byte[] onReceiving(QueryConnection connection, byte[] bytes) throws Exception {
 		bytes = cipher.doFinal(bytes);
-		return super.onSending(connection, bytes);
+		return super.onReceiving(connection, bytes);
 	}
 	
 	@Override
-	public void onUncaughtException(QueryConnection connection, Throwable thrown) throws Exception {
-		if (thrown instanceof BadPaddingException || thrown instanceof IllegalBlockSizeException) {
-			connection.disconnect();
-			return;
-		}
-		super.onUncaughtException(connection, thrown);
+	public void onCaughtException(QueryConnection connection, Throwable thrown) throws Exception {
 	}
-
+	
 }

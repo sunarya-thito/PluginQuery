@@ -27,6 +27,8 @@ import septogeddon.pluginquery.api.QueryFuture;
 import septogeddon.pluginquery.api.QueryMessageListener;
 import septogeddon.pluginquery.api.QueryMessenger;
 import septogeddon.pluginquery.api.QueryMetadataKey;
+import septogeddon.pluginquery.api.QueryPipeline;
+import septogeddon.pluginquery.channel.QueryDecryptor;
 import septogeddon.pluginquery.channel.QueryDeflater;
 import septogeddon.pluginquery.channel.QueryEncryptor;
 import septogeddon.pluginquery.channel.QueryInflater;
@@ -55,10 +57,15 @@ public class BungeePluginQuery extends Plugin implements Listener, QueryMessageL
 		getLogger().log(Level.INFO, "Initializing PluginQuery...");
 		PluginQuery.initializeDefaultMessenger();
 		reloadConfig();
-		PluginQuery.getMessenger().getPipeline().addFirst(
-				new QueryInflater(),
-				new QueryDeflater()
-				);
+		QueryPipeline pipe = PluginQuery.getMessenger().getPipeline();
+		QueryDeflater deflater = new QueryDeflater();
+		QueryInflater inflater = new QueryInflater();
+		if (pipe.addBefore(QueryContext.HANDLER_ENCRYPTOR, deflater)) {
+			pipe.addLast(deflater);
+		}
+		if (pipe.addAfter(QueryContext.HANDLER_DECRYPTOR, inflater)) {
+			pipe.addLast(inflater);
+		}
 		// the reconnect handler, not affected by MAX_RECONNECT_TRY
 		PluginQuery.getMessenger().getEventBus().registerListener(QueryContext.RECONNECT_HANDLER);
 		getProxy().getServers().values().forEach(server->{
@@ -119,6 +126,24 @@ public class BungeePluginQuery extends Plugin implements Listener, QueryMessageL
 		messenger.getPipeline().remove(QueryContext.HANDLER_THROTTLE);
 		messenger.getMetadata().setData(QueryContext.METAKEY_MAX_RECONNECT_TRY, null);
 		messenger.getMetadata().setData(QueryContext.METAKEY_RECONNECT_DELAY, null);
+		List<String> whitelist = getQueryConfig().getOption(QueryContext.IP_WHITELIST);
+		if (whitelist != null && !whitelist.isEmpty()) {
+			messenger.getPipeline().addLast(new QueryWhitelist(whitelist));
+		}
+		long throttle = getQueryConfig().getOption(QueryContext.CONNECTION_THROTTLE).longValue();
+		if (throttle > 0) {
+			messenger.getPipeline().addLast(new QueryThrottle(throttle));
+		}
+		long reconnectDelay = getQueryConfig().getOption(QueryContext.RECONNECT_DELAY).longValue();
+		if (reconnectDelay > 0) {
+			messenger.getMetadata().setData(QueryContext.METAKEY_RECONNECT_DELAY, reconnectDelay);
+		}
+		int maxConnection = getQueryConfig().getOption(QueryContext.CONNECTION_LIMIT).intValue();
+		if (maxConnection >= 0) {
+			messenger.getPipeline().addLast(new QueryLimiter(maxConnection));
+		}
+		int maxReconnectTry = getQueryConfig().getOption(QueryContext.MAX_RECONNECT_TRY).intValue();
+		messenger.getMetadata().setData(QueryContext.METAKEY_MAX_RECONNECT_TRY, maxReconnectTry);
 		File secret = new File(getDataFolder(), "secret.key");
 		if (secret.exists()) {
 			try {
@@ -130,33 +155,17 @@ public class BungeePluginQuery extends Plugin implements Listener, QueryMessageL
 			try {
 				Key generated = EncryptionToolkit.generateKey();
 				encryption = new EncryptionToolkit(generated);
-			} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException e) {
+				encryption.writeKey(secret);
+			} catch (IOException | InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException e) {
 				getLogger().log(Level.SEVERE, "Failed to generate secret.key!", e);
 			}
 		}
 		if (encryption != null) {
-			messenger.getPipeline().addFirst(
-					new QueryEncryptor(encryption.getEncryptor()),
-					new QueryEncryptor(encryption.getDecryptor()));
+			getLogger().log(Level.INFO, "Using encryption algorithm: "+encryption.getKey().getAlgorithm());
+			PluginQuery.getMessenger().getPipeline().addLast(
+					new QueryDecryptor(encryption.getDecryptor()),
+					new QueryEncryptor(encryption.getEncryptor()));
 		}
-		List<String> whitelist = getQueryConfig().getOption(QueryContext.IP_WHITELIST);
-		if (whitelist != null && !whitelist.isEmpty()) {
-			messenger.getPipeline().addFirst(new QueryWhitelist(whitelist));
-		}
-		long throttle = getQueryConfig().getOption(QueryContext.CONNECTION_THROTTLE).longValue();
-		if (throttle > 0) {
-			messenger.getPipeline().addFirst(new QueryThrottle(throttle));
-		}
-		long reconnectDelay = getQueryConfig().getOption(QueryContext.RECONNECT_DELAY).longValue();
-		if (reconnectDelay > 0) {
-			messenger.getMetadata().setData(QueryContext.METAKEY_RECONNECT_DELAY, reconnectDelay);
-		}
-		int maxConnection = getQueryConfig().getOption(QueryContext.CONNECTION_LIMIT).intValue();
-		if (maxConnection >= 0) {
-			messenger.getPipeline().addFirst(new QueryLimiter(maxConnection));
-		}
-		int maxReconnectTry = getQueryConfig().getOption(QueryContext.MAX_RECONNECT_TRY).intValue();
-		messenger.getMetadata().setData(QueryContext.METAKEY_MAX_RECONNECT_TRY, maxReconnectTry);
 	}
 	
 	public void sendMessage(Object obj, String msg) {

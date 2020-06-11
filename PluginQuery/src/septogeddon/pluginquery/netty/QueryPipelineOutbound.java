@@ -14,6 +14,7 @@ public class QueryPipelineOutbound extends MessageToByteEncoder<ByteBuf> {
 		this.pipe = pipeline;
 		this.connection = connection;
 	}
+	
 	@Override
 	protected void encode(ChannelHandlerContext arg0, ByteBuf input, ByteBuf output) throws Exception {
 		byte[] bytes = new byte[input.readableBytes()];

@@ -1,6 +1,7 @@
 package septogeddon.pluginquery.channel;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.zip.Deflater;
 
 import septogeddon.pluginquery.QueryChannelHandler;
@@ -12,21 +13,25 @@ public class QueryDeflater extends QueryChannelHandler {
 	public QueryDeflater() {
 		super(QueryContext.HANDLER_DEFLATER);
 	}
-	
+
 	@Override
 	public byte[] onSending(QueryConnection connection, byte[] bytes) throws Exception {
-		Deflater deflater = new Deflater(Deflater.BEST_COMPRESSION);
-		deflater.setInput(bytes);
+		return super.onSending(connection, compress(bytes));
+	}
+
+	public static byte[] compress(byte[] data) throws IOException {
+		Deflater deflater = new Deflater();
+		deflater.setInput(data);
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
 		deflater.finish();
-		ByteArrayOutputStream output = new ByteArrayOutputStream();
-		int len;
-		byte[] buf = new byte[1024];
-		while ((len = deflater.deflate(buf, 0, buf.length)) != -1) {
-			output.write(buf, 0, len);
+		byte[] buffer = new byte[1024];
+		while (!deflater.finished()) {
+			int count = deflater.deflate(buffer);
+			outputStream.write(buffer, 0, count);
 		}
-		bytes = output.toByteArray();
-		deflater.end();
-		return super.onSending(connection, bytes);
+		outputStream.close();
+		byte[] output = outputStream.toByteArray();
+		return output;
 	}
 
 }
