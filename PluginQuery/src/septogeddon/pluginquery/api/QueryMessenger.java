@@ -21,7 +21,7 @@ public interface QueryMessenger {
 	 */
 	public QueryConnection injectConnection(Channel channel);
 	/***
-	 * Disconnect and remove this connection from the connection pool
+	 * Disconnect and remove this connection from the connection pool and execute {@link QueryConnection#disconnect()}
 	 * @param connection
 	 */
 	public void closeConnection(QueryConnection connection);

@@ -20,7 +20,6 @@ import septogeddon.pluginquery.api.QueryFuture;
 import septogeddon.pluginquery.api.QueryMessenger;
 import septogeddon.pluginquery.api.QueryMetadata;
 import septogeddon.pluginquery.netty.QueryProtocol;
-import septogeddon.pluginquery.utils.Debug;
 import septogeddon.pluginquery.utils.QueryUtil;
 
 public class QueryConnectionImpl implements QueryConnection {
@@ -128,6 +127,7 @@ public class QueryConnectionImpl implements QueryConnection {
 	}
 	
 	public QueryFuture<QueryConnection> connect(int currentTime) {
+		QueryUtil.illegalState(!getMessenger().getConnections().contains(this), "not registered connection");
 		QueryUtil.illegalState(isConnecting(), "already connecting");
 		QueryUtil.illegalState(isConnected(), "already connected");
 		connecting = true;
@@ -176,10 +176,9 @@ public class QueryConnectionImpl implements QueryConnection {
 	@Override
 	public QueryFuture<QueryConnection> disconnect() {
 		QueryUtil.illegalState(!isConnected() && !isConnecting(), "not connected");
-		Debug.debug("DISCONNECTING CONNECTION");
-		Thread.dumpStack();
 		ChannelFuture future = channel.close();
 		future.addListener((ChannelFuture f)->{
+			queues.clear();
 			protocol.clear();
 		});
 		return new QueryChannelFuture<>(future, this);
@@ -215,7 +214,7 @@ public class QueryConnectionImpl implements QueryConnection {
 	}
 	
 	private void sendPrivately(QueueQuery query) {
-		if (channel.eventLoop().inEventLoop()) {
+		if (channel == null || channel.eventLoop().inEventLoop()) {
 			sendDirectly(query);
 		} else {
 			channel.eventLoop().submit(()->sendDirectly(query));

@@ -49,48 +49,51 @@ public class Debug {
 				System.out.println("Disconnected!");
 			}
 		});
+		AtomicInteger count = new AtomicInteger();
+		AtomicInteger failCount = new AtomicInteger();
+		connection.getEventBus().registerListener((conn, channel, message)->{
+			DataBuffer buf = new DataBuffer(message);
+			String command = buf.readUTF();
+			if (QueryContext.COMMAND_VERSION_CHECK.equals(command)) {
+				String version = buf.readUTF();
+				String source = buf.readUTF();
+				debug(source+": "+version+" ("+count.getAndIncrement()+"/"+failCount.get()+")");
+			}
+		});
 		Debug.debug("waiting to connect");
 		future.joinThread();
 		Debug.debug("CONNECTED");
-		QueuedQuery queue = new QueuedQuery(connection, QueryContext.PLUGIN_MESSAGING_CHANNEL);
-		AtomicInteger count = new AtomicInteger();
-		for (int i = 0; i < 100; i++) {
+		for (int i = 0; i < 500; i++) {
 			DataBuffer buffer = new DataBuffer();
 			buffer.writeUTF(QueryContext.COMMAND_VERSION_CHECK);
 			buffer.writeUTF("Standalone non-bungee");
 			buffer.writeUTF("testServer");
-			QueryFuture<byte[]> bytes = queue.sendQuery(buffer.toByteArray());
-			bytes.thenAccept(x->{
-				byte[] result = bytes.getResult();
-				DataBuffer buf = new DataBuffer(result);
-				String command = buf.readUTF();
-				if (QueryContext.COMMAND_VERSION_CHECK.equals(command)) {
-					String version = buf.readUTF();
-					String source = buf.readUTF();
-					debug(source+": "+version+" ("+count.getAndIncrement()+")");
+			QueryFuture<QueryConnection> bytes = connection.sendQuery(QueryContext.PLUGIN_MESSAGING_CHANNEL, buffer.toByteArray());
+			bytes.addListener(futured->{
+				if (!futured.isSuccess()) {
+					futured.getCause().printStackTrace();
+					failCount.getAndIncrement();
 				}
 			});
 		}
+		Debug.debug("disconnecting...");
 		connection.disconnect().joinThread();
+		Debug.debug("disconnected, reconnecting...");
 		connection.connect().joinThread();
-		for (int i = 0; i < 1000; i++) {
+		Debug.debug("connected");
+		for (int i = 0; i < 500; i++) {
 			DataBuffer buffer = new DataBuffer();
 			buffer.writeUTF(QueryContext.COMMAND_VERSION_CHECK);
 			buffer.writeUTF("Standalone non-bungee");
 			buffer.writeUTF("testServer");
-			QueryFuture<byte[]> bytes = queue.sendQuery(buffer.toByteArray());
-			bytes.thenAccept(x->{
-				byte[] result = bytes.getResult();
-				DataBuffer buf = new DataBuffer(result);
-				String command = buf.readUTF();
-				if (QueryContext.COMMAND_VERSION_CHECK.equals(command)) {
-					String version = buf.readUTF();
-					String source = buf.readUTF();
-					debug(source+": "+version+" ("+count.getAndIncrement()+")");
+			QueryFuture<QueryConnection> bytes = connection.sendQuery(QueryContext.PLUGIN_MESSAGING_CHANNEL, buffer.toByteArray());
+			bytes.addListener(futured->{
+				if (!futured.isSuccess()) {
+					futured.getCause().printStackTrace();
+					failCount.getAndIncrement();
 				}
 			});
 		}
-		debug("Done!");
 	}
 	
 }
