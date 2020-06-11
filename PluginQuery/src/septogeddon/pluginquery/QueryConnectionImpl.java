@@ -61,6 +61,8 @@ public class QueryConnectionImpl implements QueryConnection {
 	protected void connectionDisconnected() {
 		getMessenger().getPipeline().dispatchInactive(this);
 		getEventBus().dispatchConnectionState(this);
+		queues.clear();
+		protocol.clear();
 	}
 	
 	protected void connectionConnected() {
@@ -223,10 +225,7 @@ public class QueryConnectionImpl implements QueryConnection {
 			if (channel.isOpen()) {
 				future = channel.close();
 			} else future = null;
-			queues.clear();
-			protocol.clear();
 			connectionDisconnected();
-			channel = null;
 		} else future = null;
 		return new QueryChannelFuture<>(future, this);
 	}

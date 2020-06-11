@@ -29,6 +29,7 @@ import septogeddon.pluginquery.api.QueryListener;
 import septogeddon.pluginquery.api.QueryMessenger;
 import septogeddon.pluginquery.api.QueryMetadataKey;
 import septogeddon.pluginquery.api.QueryPipeline;
+import septogeddon.pluginquery.bungeecord.event.QueryMessageEvent;
 import septogeddon.pluginquery.channel.QueryDecryptor;
 import septogeddon.pluginquery.channel.QueryDeflater;
 import septogeddon.pluginquery.channel.QueryEncryptor;
@@ -207,6 +208,9 @@ public class BungeePluginQuery extends Plugin implements Listener, QueryListener
 				String sourceServer = buffer.readUTF();
 				getLogger().log(Level.INFO, sourceServer+" version: "+spigotVersion);
 			}
+		} else {
+			// custom bungeecord event handling
+			getProxy().getPluginManager().callEvent(new QueryMessageEvent(connection, channel, message));
 		}
 	}
 

@@ -50,5 +50,18 @@ public interface QueryMessenger {
 	 * @return
 	 */
 	public Class<? extends Channel> getChannelClass();
+	/***
+	 * broadcast query to all active connections
+	 * @param channel
+	 * @param message
+	 * @return true if there is at least 1 active connection
+	 */
+	public default boolean broadcastQuery(String channel, byte[] message) {
+		int count = 0;
+		for (QueryConnection connection : getActiveConnections()) {
+			connection.sendQuery(channel, message);
+		}
+		return count != 0;
+	}
 	
 }
