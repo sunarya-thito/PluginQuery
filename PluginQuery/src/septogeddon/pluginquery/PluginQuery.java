@@ -8,8 +8,8 @@ public class PluginQuery {
 	private static QueryMessenger messengerInstance;
 	
 	@SuppressWarnings("all")
-	public static <T extends QueryMessenger> T getMessenger() {
-		return (T) messengerInstance;
+	public static QueryMessenger getMessenger() {
+		return messengerInstance;
 	}
 	
 	public static void setMessenger(QueryMessenger messenger) {
