@@ -114,18 +114,25 @@ public class QueryConnectionImpl implements QueryConnection {
 	
 	public void handshake(QueryCompletableFuture<QueryConnection> future, int currentTime) {
 		ByteBuf buf = getChannel().alloc().heapBuffer();
-		buf.writeInt(QueryContext.PACKET_HANDSHAKE.length());
+		
+		// send "query"
+		buf.writeByte((byte)QueryContext.PACKET_HANDSHAKE.length());
 		buf.writeBytes(QueryContext.PACKET_HANDSHAKE.getBytes());
+		// send UUID
 		UUID randomized = UUID.randomUUID();
 		buf.writeLong(randomized.getMostSignificantBits());
 		buf.writeLong(randomized.getLeastSignificantBits());
+		// encrypt UUID
 		String uuid = randomized.toString();
 		byte[] handshake = uuid.getBytes();
 		handshake = getMessenger().getPipeline().dispatchSending(this, handshake);
 		if (handshake == null) handshake = new byte[0];
-		buf.writeInt(handshake.length);
+		// send encrypted UUID
+		buf.writeShort((short)handshake.length);
 		buf.writeBytes(handshake);
+		// ask to response
 		buf.writeBoolean(true);
+		
 		ChannelFuture fut = getChannel().writeAndFlush(buf);
 		fut.addListener((ChannelFuture f)->{
 			Throwable cause = f.cause();

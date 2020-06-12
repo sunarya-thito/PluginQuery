@@ -11,6 +11,7 @@ import septogeddon.pluginquery.api.QueryMessenger;
 import septogeddon.pluginquery.bungeecord.BungeePluginQuery;
 import septogeddon.pluginquery.bungeecord.event.QueryMessageEvent;
 
+@SuppressWarnings("all")
 public class Example {
 
 	/*

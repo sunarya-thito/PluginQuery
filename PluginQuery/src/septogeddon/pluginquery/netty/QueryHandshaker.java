@@ -27,22 +27,26 @@ public class QueryHandshaker extends ChannelDuplexHandler {
 			ByteBuf buf = (ByteBuf)msg;
 			buf.markReaderIndex();
 			try {
-				int length = buf.readInt();
+				byte length = buf.readByte();
 				// prevent overflow byte read
 				if (length == QueryContext.PACKET_HANDSHAKE.length()) {
+					// read "query"
 					byte[] bytes = new byte[length];
 					buf.readBytes(bytes);
 					if (new String(bytes).equals(QueryContext.PACKET_HANDSHAKE)) {
-						// SERVER SIDE HANDSHAKE HANDLING
+						// read UUID
 						long most = buf.readLong();
 						long least = buf.readLong();
 						String uuid = new UUID(most, least).toString();
-						length = buf.readInt();
-						bytes = new byte[length];
+						// read encrypted UUID
+						short lengthShort = buf.readShort();
+						bytes = new byte[lengthShort];
 						buf.readBytes(bytes);
 						boolean response = buf.readBoolean();
 						try {
+							// decrypt UUID
 							bytes = protocol.getMessenger().getPipeline().dispatchReceiving(protocol.getConnection(), bytes);
+							// match the decrypted UUID with the UUID
 							if (new String(bytes).equals(uuid)) {
 								// remove minecraft packet handlers and this handler
 								// in this process, read timeout also removed
@@ -55,13 +59,19 @@ public class QueryHandshaker extends ChannelDuplexHandler {
 								QueryConnectionImpl.handshakenConnection(protocol, pipe);
 								if (response) {
 									ByteBuf buffer = ctx.alloc().directBuffer();
-									buffer.writeInt(QueryContext.PACKET_HANDSHAKE.length());
+									
+									// send "query"
+									buffer.writeByte((byte)QueryContext.PACKET_HANDSHAKE.length());
 									buffer.writeBytes(QueryContext.PACKET_HANDSHAKE.getBytes());
+									// send UUID
 									buffer.writeLong(most);
 									buffer.writeLong(least);
-									buffer.writeInt(bytes.length);
+									// send encrypted UUID
+									buffer.writeShort((short)bytes.length);
 									buffer.writeBytes(bytes);
+									// don't ask to response, otherwise, it will create infinite loop
 									buffer.writeBoolean(false);
+									
 									ctx.writeAndFlush(buffer).addListener((ChannelFuture f)->{
 										if (!f.isSuccess()) {
 											f.channel().close();
