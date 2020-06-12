@@ -56,7 +56,6 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
 		if (!pipe.addAfter(QueryContext.HANDLER_DECRYPTOR, inflater)) {
 			pipe.addFirst(inflater);
 		}
-		register();
 		PluginQuery.getMessenger().getEventBus().registerListener(this);
 		getCommand("spigotpluginquery").setExecutor(new SpigotPluginQueryCommand(this));
 		getServer().getServicesManager()
@@ -64,6 +63,7 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
 		getLogger().log(Level.INFO, "Registering plugin channel: "+QueryContext.PLUGIN_MESSAGING_CHANNEL);
 		getServer().getMessenger().registerIncomingPluginChannel(this, QueryContext.PLUGIN_MESSAGING_CHANNEL, this);
 		getServer().getMessenger().registerOutgoingPluginChannel(this, QueryContext.PLUGIN_MESSAGING_CHANNEL);
+		register(true);
 	}
 	
 	public void onDisable() {
@@ -73,7 +73,7 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
 		}
 	}
 	
-	protected void register() {
+	protected void register(boolean tryAgain) {
 		try {
 			// TODO Check latebind
 			Object craftserver = Bukkit.getServer();
@@ -89,6 +89,7 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
 							break;
 						}
 						Channel future = ((ChannelFuture)obj).channel();
+						getLogger().log(Level.INFO, "Injected server connection listener: "+future);
 						listeners.add(future);
 						// begin listening to incoming channels
 						future.pipeline().addFirst(new QueryInterceptor(PluginQuery.getMessenger()));
@@ -96,7 +97,14 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
 				}
 			}
 		} catch (Throwable t) {
-			getLogger().log(Level.SEVERE, "Failed to inject server connection", t);
+			if (tryAgain) {
+				getLogger().log(Level.WARNING, "Failed to inject server connection. Retrying...");
+				getServer().getScheduler().scheduleSyncDelayedTask(this, ()->{
+					register(false);
+				});
+			} else {
+				getLogger().log(Level.SEVERE, "Failed to inject server connection", t);
+			}
 		}
 	}
 	

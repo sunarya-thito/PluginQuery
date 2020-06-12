@@ -127,8 +127,9 @@ public class QueryConnectionImpl implements QueryConnection {
 		String uuid = randomized.toString();
 		byte[] handshake = uuid.getBytes();
 		handshake = getMessenger().getPipeline().dispatchSending(this, handshake);
-		if (handshake == null) handshake = new byte[0];
+		QueryUtil.nonNull(handshake, "unique handshake token");
 		// send encrypted UUID
+		QueryUtil.illegalArgument(handshake.length > Byte.MAX_VALUE, "unique handshake token too long > "+Byte.MAX_VALUE);
 		buf.writeByte((byte)handshake.length);
 		buf.writeBytes(handshake);
 		// ask to response

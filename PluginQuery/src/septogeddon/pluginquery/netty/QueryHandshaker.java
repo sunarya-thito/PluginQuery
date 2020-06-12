@@ -11,6 +11,7 @@ import septogeddon.pluginquery.QueryCompletableFuture;
 import septogeddon.pluginquery.QueryConnectionImpl;
 import septogeddon.pluginquery.api.QueryConnection;
 import septogeddon.pluginquery.api.QueryContext;
+import septogeddon.pluginquery.utils.QueryUtil;
 
 public class QueryHandshaker extends ChannelDuplexHandler {
 
@@ -47,6 +48,7 @@ public class QueryHandshaker extends ChannelDuplexHandler {
 							byte[] encryptedUUID = bytes;
 							// decrypt UUID
 							bytes = protocol.getMessenger().getPipeline().dispatchReceiving(protocol.getConnection(), bytes);
+							QueryUtil.nonNull(bytes, "unique handshake token");
 							// match the decrypted UUID with the UUID
 							if (new String(bytes).equals(uuid)) {
 								// remove minecraft packet handlers and this handler
