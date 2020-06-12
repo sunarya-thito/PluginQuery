@@ -18,7 +18,7 @@ public class DataBuffer implements DataInput, DataOutput {
 		return (minCapacity > MAX_ARRAY_SIZE) ? Integer.MAX_VALUE : MAX_ARRAY_SIZE;
 	}
 
-	public final static String readUTF(DataBuffer in) {
+	private final static String readUTF(DataBuffer in) {
 		int utflen = in.readUnsignedShort();
 		byte[] bytearr = new byte[utflen];
 		char[] chararr = new char[utflen];
@@ -78,7 +78,7 @@ public class DataBuffer implements DataInput, DataOutput {
 		return new String(chararr, 0, chararr_count);
 	}
 
-	public static int writeUTF(String str, DataBuffer out) {
+	private static int writeUTF(String str, DataBuffer out) {
 		int strlen = str.length();
 		int utflen = 0;
 		int c, count = 0;
@@ -136,20 +136,30 @@ public class DataBuffer implements DataInput, DataOutput {
 
 	private int pos;
 
-	private char lineBuffer[];
-
 	private byte writeBuffer[] = new byte[8];
 
+	/***
+	 * Create a buffer with 32 byte length of initial size 
+	 */
 	public DataBuffer() {
 		buf = new byte[32];
 	}
 	
+	/**
+	 * Create a buffer with existing byte array
+	 * @param buff
+	 */
 	public DataBuffer(byte[] buff) {
 		buf = buff;
 		pos = 0;
 		count = buff.length;
 	}
 	
+	/***
+	 * Read the input stream and copy it to the buffer
+	 * @param input
+	 * @throws IOException
+	 */
 	public DataBuffer(InputStream input) throws IOException {
 		int len;
 		byte[] buffer = new byte[8 * 1024];
@@ -158,14 +168,27 @@ public class DataBuffer implements DataInput, DataOutput {
 		}
 	}
 
+	/***
+	 * Create a buffer with specific initial size
+	 * @param initialSize
+	 */
 	public DataBuffer(int initialSize) {
 		buf = new byte[initialSize];
 	}
 	
+	/***
+	 * Copy the buffer to the OutputStream
+	 * @param output
+	 * @throws IOException
+	 */
 	public synchronized void copyTo(OutputStream output) throws IOException {
 		output.write(toByteArray());
 	}
 
+	/***
+	 * Get readable bytes (basically the current buffer size) 
+	 * @return
+	 */
 	public int available() {
 		return count - pos;
 	}
@@ -175,7 +198,10 @@ public class DataBuffer implements DataInput, DataOutput {
 			grow(minCapacity);
 	}
 	
-	public void reset() {
+	/***
+	 * Clear the buffer
+	 */
+	public void clear() {
 		pos = count = 0;
 	}
 
@@ -191,10 +217,21 @@ public class DataBuffer implements DataInput, DataOutput {
 		pos = 0;
 	}
 
+	/***
+	 * Read a byte
+	 * @return
+	 */
 	public synchronized int read() {
 		return (pos < count) ? (buf[pos++] & 0xff) : -1;
 	}
 
+	/***
+	 * Read bytes at specific offset and length
+	 * @param b
+	 * @param off
+	 * @param len
+	 * @return
+	 */
 	public synchronized int read(byte b[], int off, int len) {
 		if (b == null) {
 			throw new NullPointerException();
@@ -218,15 +255,26 @@ public class DataBuffer implements DataInput, DataOutput {
 		return len;
 	}
 
+	/***
+	 * Read and fill the provided byte array
+	 * @param bytes
+	 * @return
+	 */
 	public int read(byte[] bytes) {
 		return this.read(bytes, 0, bytes.length);
 	}
 
+	/***
+	 * Read a boolean
+	 */
 	public final boolean readBoolean() {
 		int ch = read();
 		return (ch != 0);
 	}
 
+	/***
+	 * Read a byte
+	 */
 	public final byte readByte() {
 		int ch = read();
 		return (byte) (ch);
@@ -234,6 +282,10 @@ public class DataBuffer implements DataInput, DataOutput {
 
 	//
 
+	/***
+	 * Read a string (non charset)
+	 * @return
+	 */
 	public String readBytes() {
 		int length = readInt();
 		byte[] uf = new byte[length];
@@ -241,12 +293,19 @@ public class DataBuffer implements DataInput, DataOutput {
 		return new String(uf);
 	}
 
+	/***
+	 * Read a character
+	 */
 	public final char readChar() {
 		int ch1 = read();
 		int ch2 = read();
 		return (char) ((ch1 << 8) + (ch2 << 0));
 	}
 
+	/***
+	 * Read a string (using charset)
+	 * @return
+	 */
 	public String readChars() {
 		int length = readInt();
 		char[] uf = new char[length];
@@ -256,18 +315,30 @@ public class DataBuffer implements DataInput, DataOutput {
 		return new String(uf);
 	}
 
+	/***
+	 * Read a double
+	 */
 	public final double readDouble() {
 		return Double.longBitsToDouble(readLong());
 	}
 
+	/***
+	 * Read a float
+	 */
 	public final float readFloat() {
 		return Float.intBitsToFloat(readInt());
 	}
 
+	/***
+	 * Read and fill the provided byte array
+	 */
 	public final void readFully(byte b[]) {
 		readFully(b, 0, b.length);
 	}
 
+	/***
+	 * Read and fill the provided byte array at specific offset and length
+	 */
 	public final void readFully(byte b[], int off, int len) {
 		if (len < 0)
 			throw new IndexOutOfBoundsException();
@@ -278,6 +349,9 @@ public class DataBuffer implements DataInput, DataOutput {
 		}
 	}
 
+	/***
+	 * Read an integer
+	 */
 	public final int readInt() {
 		int ch1 = read();
 		int ch2 = read();
@@ -286,52 +360,17 @@ public class DataBuffer implements DataInput, DataOutput {
 		return ((ch1 << 24) + (ch2 << 16) + (ch3 << 8) + (ch4 << 0));
 	}
 
+	/***
+	 * Not supported
+	 */
 	@Deprecated
 	public final String readLine() {
-		char buf[] = lineBuffer;
-
-		if (buf == null) {
-			buf = lineBuffer = new char[128];
-		}
-
-		int room = buf.length;
-		int offset = 0;
-		int c;
-
-		loop: while (true) {
-			switch (c = read()) {
-			case -1:
-			case '\n':
-				break loop;
-
-			case '\r':
-				int c2 = read();
-				if ((c2 != '\n') && (c2 != -1)) {
-					throw new UnsupportedOperationException();
-//                    if (!(in instanceof PushbackInputStream)) {
-//                        this.in = new PushbackInputStream(in);
-//                    }
-//                    ((PushbackInputStream)in).unread(c2);
-				}
-				break loop;
-
-			default:
-				if (--room < 0) {
-					buf = new char[offset + 128];
-					room = buf.length - offset - 1;
-					System.arraycopy(lineBuffer, 0, buf, 0, offset);
-					lineBuffer = buf;
-				}
-				buf[offset++] = (char) c;
-				break;
-			}
-		}
-		if ((c == -1) && (offset == 0)) {
-			return null;
-		}
-		return String.copyValueOf(buf, 0, offset);
+		throw new UnsupportedOperationException();
 	}
 
+	/***
+	 * Read a long
+	 */
 	public final long readLong() {
 		readFully(readBuffer, 0, 8);
 		return (((long) readBuffer[0] << 56) + ((long) (readBuffer[1] & 255) << 48)
@@ -340,41 +379,68 @@ public class DataBuffer implements DataInput, DataOutput {
 				+ ((readBuffer[7] & 255) << 0));
 	}
 
+	/***
+	 * Read a short
+	 */
 	public final short readShort() {
 		int ch1 = read();
 		int ch2 = read();
 		return (short) ((ch1 << 8) + (ch2 << 0));
 	}
 
+	/***
+	 * Read an unsigned byte
+	 */
 	public final int readUnsignedByte() {
 		int ch = read();
 		return ch;
 	}
 
+	/***
+	 * Read an unsigned short
+	 */
 	public final int readUnsignedShort() {
 		int ch1 = read();
 		int ch2 = read();
 		return (ch1 << 8) + (ch2 << 0);
 	}
 
+	/***
+	 * Read a String (UTF)
+	 */
 	public final String readUTF() {
 		return readUTF(this);
 	}
 
+	/***
+	 * Skip bytes
+	 * @param n
+	 * @return
+	 */
 	public long skip(long n) {
 		return this.skipBytes((int) n);
 	}
 
+	/***
+	 * Skip bytes
+	 */
 	public final int skipBytes(int n) {
 		int diff = count - pos;
 		pos = Math.min(pos + n, count);
 		return n - diff;
 	}
 
+	/***
+	 * Transform this buffer into a byte array
+	 * @return
+	 */
 	public synchronized byte toByteArray()[] {
 		return Arrays.copyOfRange(buf, pos, count);
 	}
 
+	/***
+	 * Write byte array at specific offset and length to this buffer
+	 */
 	public synchronized void write(byte b[], int off, int len) {
 		if ((off < 0) || (off > b.length) || (len < 0) || ((off + len) - b.length > 0)) {
 			throw new IndexOutOfBoundsException();
@@ -384,38 +450,58 @@ public class DataBuffer implements DataInput, DataOutput {
 		count += len;
 	}
 
+	/***
+	 * Write byte array to this buffer
+	 */
 	@Override
 	public void write(byte[] b) {
 		write(b, 0, b.length);
 	}
 
+	/***
+	 * Write a byte to this buffer
+	 */
 	public synchronized void write(int b) {
 		ensureCapacity(count + 1);
 		buf[count] = (byte) b;
 		count += 1;
 	}
-
-	//
+	
+	/***
+	 * Write a boolean to this buffer
+	 */
 	public final void writeBoolean(boolean v) {
 		write(v ? 1 : 0);
 	}
 
+	/***
+	 * Write a byte to this buffer
+	 */
 	public final void writeByte(int v) {
 		write(v);
 	}
 
+	/***
+	 * Write a String (non Charset)
+	 */
 	public final void writeBytes(String s) {
 		int len = s.length();
 		writeInt(len);
 		write(s.getBytes());
 	}
 
+	/***
+	 * Write a character
+	 */
 	public final void writeChar(int v) {
 		write((v >>> 8) & 0xFF);
 		write((v >>> 0) & 0xFF);
 
 	}
 
+	/***
+	 * Write a String (Charset)
+	 */
 	public final void writeChars(String s) {
 		int len = s.length();
 		writeInt(len);
@@ -425,14 +511,23 @@ public class DataBuffer implements DataInput, DataOutput {
 		}
 	}
 
+	/***
+	 * Write a double
+	 */
 	public final void writeDouble(double v) {
 		writeLong(Double.doubleToLongBits(v));
 	}
 
+	/***
+	 * Write a float
+	 */
 	public final void writeFloat(float v) {
 		writeInt(Float.floatToIntBits(v));
 	}
 
+	/***
+	 * Write an integer
+	 */
 	public final void writeInt(int v) {
 		write((v >>> 24) & 0xFF);
 		write((v >>> 16) & 0xFF);
@@ -441,6 +536,9 @@ public class DataBuffer implements DataInput, DataOutput {
 
 	}
 
+	/***
+	 * Write a long
+	 */
 	public final void writeLong(long v) {
 		writeBuffer[0] = (byte) (v >>> 56);
 		writeBuffer[1] = (byte) (v >>> 48);
@@ -454,11 +552,17 @@ public class DataBuffer implements DataInput, DataOutput {
 
 	}
 
+	/***
+	 * Write a short
+	 */
 	public final void writeShort(int v) {
 		write((v >>> 8) & 0xFF);
 		write((v >>> 0) & 0xFF);
 	}
 
+	/***
+	 * Write a String (UTF)
+	 */
 	public final void writeUTF(String str) {
 		writeUTF(str, this);
 	}

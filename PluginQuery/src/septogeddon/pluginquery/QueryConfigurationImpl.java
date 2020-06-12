@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -55,7 +56,7 @@ public class QueryConfigurationImpl implements QueryConfiguration {
 		setOption(QueryContext.CONNECTION_THROTTLE, 1500);
 		setOption(QueryContext.RECONNECT_DELAY, 1500);
 		setOption(QueryContext.LOCK, false);
-		setOption(QueryContext.IP_WHITELIST, null);
+		setOption(QueryContext.IP_WHITELIST, new ArrayList<>());
 		setOption(QueryContext.CONNECTION_LIMIT, 1);
 		setOption(QueryContext.MAX_RECONNECT_TRY, -1);
 	}

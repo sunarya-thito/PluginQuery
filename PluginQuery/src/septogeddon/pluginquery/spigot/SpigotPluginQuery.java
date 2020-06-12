@@ -158,7 +158,7 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
 				String configuredServerName = buffer.readUTF();
 				getLogger().log(Level.INFO, "BungeeCord version: "+bungeeCordVersion+" ("+connection.getAddress()+")");
 				getLogger().log(Level.INFO, "Configured server name: "+configuredServerName);
-				buffer.reset();
+				buffer.clear();
 				buffer.writeUTF(QueryContext.COMMAND_VERSION_CHECK);
 				buffer.writeUTF(getServer().getVersion());
 				buffer.writeUTF(configuredServerName);
@@ -207,7 +207,7 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
 			if (QueryContext.REQUEST_KEY_SHARE.equals(command)) {
 				if (arg1 != null) {
 					if (getQueryConfig().getOption(QueryContext.LOCK)) {
-						buffer.reset();
+						buffer.clear();
 						buffer.writeUTF(QueryContext.RESPONSE_LOCKED);
 					} else if (arg1.hasPermission(QueryContext.ADMIN_PERMISSION)) {
 						byte[] keys = buffer.toByteArray();
@@ -216,7 +216,7 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
 							output.write(keys);
 							output.close();
 							reloadKey();
-							buffer.reset();
+							buffer.clear();
 							buffer.writeUTF(QueryContext.RESPONSE_SUCCESS);
 							// lock the synchronization
 							getQueryConfig().setOption(QueryContext.LOCK, true);
@@ -229,12 +229,12 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
 							getLogger().log(Level.INFO, "secret.key has been synchronized by player "+arg1.getName());
 						} catch (Throwable t) {
 							t.printStackTrace();
-							buffer.reset();
+							buffer.clear();
 							buffer.writeUTF(QueryContext.RESPONSE_ERROR);
 							buffer.writeUTF(t.toString());
 						}
 					} else {
-						buffer.reset();
+						buffer.clear();
 						buffer.writeUTF(QueryContext.RESPONSE_NO_PERMISSION);
 					}
 				}

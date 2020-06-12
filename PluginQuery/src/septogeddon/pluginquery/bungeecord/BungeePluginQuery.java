@@ -42,9 +42,17 @@ import septogeddon.pluginquery.utils.EncryptionToolkit;
 
 public class BungeePluginQuery extends Plugin implements Listener, QueryListener {
 
+	/***
+	 * Metadata Key for {@link net.md_5.bungee.api.config.ServerInfo}
+	 */
 	public static final QueryMetadataKey<ServerInfo> SERVER_INFO = QueryMetadataKey.newCastableKey("bungeeserverinfo", ServerInfo.class);
-	public static final QueryMetadataKey<Integer> RECONNECT_TRY_TIMES = QueryMetadataKey.newCastableKey("bungeepluginquery_retry_times", Integer.class);
+	private static final QueryMetadataKey<Integer> RECONNECT_TRY_TIMES = QueryMetadataKey.newCastableKey("bungeepluginquery_retry_times", Integer.class);
 	
+	/***
+	 * Get active connection for a {@link net.md_5.bungee.api.config.ServerInfo}
+	 * @param info
+	 * @return
+	 */
 	public static QueryConnection getConnection(ServerInfo info) {
 		for (QueryConnection conn : PluginQuery.getMessenger().getActiveConnections()) {
 			if (conn.getMetadata().getData(SERVER_INFO) == info) {
