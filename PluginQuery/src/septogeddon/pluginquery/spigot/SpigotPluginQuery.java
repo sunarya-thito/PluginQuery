@@ -50,10 +50,10 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
 		QueryPipeline pipe = PluginQuery.getMessenger().getPipeline();
 		QueryDeflater deflater = new QueryDeflater();
 		QueryInflater inflater = new QueryInflater();
-		if (pipe.addBefore(QueryContext.HANDLER_ENCRYPTOR, deflater)) {
+		if (!pipe.addBefore(QueryContext.HANDLER_ENCRYPTOR, deflater)) {
 			pipe.addLast(deflater);
 		}
-		if (pipe.addAfter(QueryContext.HANDLER_DECRYPTOR, inflater)) {
+		if (!pipe.addAfter(QueryContext.HANDLER_DECRYPTOR, inflater)) {
 			pipe.addFirst(inflater);
 		}
 		register();

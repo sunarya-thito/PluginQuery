@@ -22,6 +22,7 @@ public class QueryDecryptor extends QueryChannelHandler {
 	
 	@Override
 	public void onCaughtException(QueryConnection connection, Throwable thrown) throws Exception {
+		thrown.printStackTrace();
 	}
 	
 }

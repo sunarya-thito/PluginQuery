@@ -43,6 +43,7 @@ public interface QueryContext {
 	public static final String COMMAND_VERSION_CHECK = "versionCheck";
 	
 	public static final QueryMetadataKey<Integer> METAKEY_MAX_RECONNECT_TRY = QueryMetadataKey.newCastableKey("max-reconnect-try", Integer.class);
+	public static final QueryMetadataKey<Long> METAKEY_READ_TIMEOUT = QueryMetadataKey.newCastableKey("readtimeout", Long.class);
 	public static final QueryMetadataKey<Long> METAKEY_RECONNECT_DELAY = QueryMetadataKey.newCastableKey("reconnect-delay", Long.class);
 	
 }

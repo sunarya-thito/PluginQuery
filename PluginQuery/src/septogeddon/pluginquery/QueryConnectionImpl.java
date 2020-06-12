@@ -14,6 +14,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
+import io.netty.handler.timeout.ReadTimeoutHandler;
 import septogeddon.pluginquery.api.QueryConnection;
 import septogeddon.pluginquery.api.QueryContext;
 import septogeddon.pluginquery.api.QueryEventBus;
@@ -53,6 +54,7 @@ public class QueryConnectionImpl implements QueryConnection {
 		if (channel != null) {
 			connecting = true;
 			getChannel().pipeline().addFirst(
+					new ReadTimeoutHandler(getMessenger().getMetadata().getData(QueryContext.METAKEY_READ_TIMEOUT, 1000L * 10), TimeUnit.MILLISECONDS),
 					new QueryHandshaker(protocol,conn)
 					);
 		}
@@ -114,7 +116,6 @@ public class QueryConnectionImpl implements QueryConnection {
 	
 	public void handshake(QueryCompletableFuture<QueryConnection> future, int currentTime) {
 		ByteBuf buf = getChannel().alloc().heapBuffer();
-		
 		// send "query"
 		buf.writeByte((byte)QueryContext.PACKET_HANDSHAKE.length());
 		buf.writeBytes(QueryContext.PACKET_HANDSHAKE.getBytes());
@@ -128,7 +129,7 @@ public class QueryConnectionImpl implements QueryConnection {
 		handshake = getMessenger().getPipeline().dispatchSending(this, handshake);
 		if (handshake == null) handshake = new byte[0];
 		// send encrypted UUID
-		buf.writeShort((short)handshake.length);
+		buf.writeByte((byte)handshake.length);
 		buf.writeBytes(handshake);
 		// ask to response
 		buf.writeBoolean(true);

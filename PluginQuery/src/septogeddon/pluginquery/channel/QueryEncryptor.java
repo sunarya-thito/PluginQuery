@@ -20,4 +20,8 @@ public class QueryEncryptor extends QueryChannelHandler {
 		return super.onSending(connection, bytes);
 	}
 	
+	@Override
+	public void onCaughtException(QueryConnection connection, Throwable thrown) throws Exception {
+	}
+	
 }

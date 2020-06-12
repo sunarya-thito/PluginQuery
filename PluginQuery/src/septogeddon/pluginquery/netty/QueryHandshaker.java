@@ -39,11 +39,12 @@ public class QueryHandshaker extends ChannelDuplexHandler {
 						long least = buf.readLong();
 						String uuid = new UUID(most, least).toString();
 						// read encrypted UUID
-						short lengthShort = buf.readShort();
-						bytes = new byte[lengthShort];
+						length = buf.readByte();
+						bytes = new byte[length];
 						buf.readBytes(bytes);
 						boolean response = buf.readBoolean();
 						try {
+							byte[] encryptedUUID = bytes;
 							// decrypt UUID
 							bytes = protocol.getMessenger().getPipeline().dispatchReceiving(protocol.getConnection(), bytes);
 							// match the decrypted UUID with the UUID
@@ -67,8 +68,8 @@ public class QueryHandshaker extends ChannelDuplexHandler {
 									buffer.writeLong(most);
 									buffer.writeLong(least);
 									// send encrypted UUID
-									buffer.writeShort((short)bytes.length);
-									buffer.writeBytes(bytes);
+									buffer.writeByte((byte)encryptedUUID.length);
+									buffer.writeBytes(encryptedUUID);
 									// don't ask to response, otherwise, it will create infinite loop
 									buffer.writeBoolean(false);
 									

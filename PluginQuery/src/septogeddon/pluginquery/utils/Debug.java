@@ -28,15 +28,14 @@ public class Debug {
 		EncryptionToolkit toolkit = new EncryptionToolkit(EncryptionToolkit.readKey(new File("D:\\TestServer\\plugins\\PluginQuery\\secret.key")));
 		messenger.getPipeline().addLast(
 				new QueryDecryptor(toolkit.getDecryptor()),
-				new QueryInflater(),
 				new QueryDeflater(),
+				new QueryInflater(),
 				new QueryEncryptor(toolkit.getEncryptor())
 				);
-		messenger.getPipeline().getPipes().forEach(pipe->Debug.debug(pipe.getName()));
 		QueryFuture<QueryConnection> future = connection.connect();
 		future.addListener(fut->{
 			if (fut.isSuccess()) {
-				debug("Connected to localhost:25565");
+				debug("Connected to localhost:25569");
 			} else {
 				debug("Failed to connect");
 				fut.getCause().printStackTrace();
