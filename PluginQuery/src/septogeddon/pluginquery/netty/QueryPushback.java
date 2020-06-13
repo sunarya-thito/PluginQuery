@@ -1,13 +1,13 @@
 package septogeddon.pluginquery.netty;
 
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import septogeddon.pluginquery.api.QueryMessenger;
 
 public class QueryPushback extends ChannelInitializer<Channel> {
 
 	private QueryMessenger messenger;
+	public static Object lock = new Object();
 	public QueryPushback(QueryMessenger messenger) {
 		this.messenger = messenger;
 	}
@@ -22,8 +22,4 @@ public class QueryPushback extends ChannelInitializer<Channel> {
 		}
 	}
 	
-	@Override
-	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-	}
-
 }

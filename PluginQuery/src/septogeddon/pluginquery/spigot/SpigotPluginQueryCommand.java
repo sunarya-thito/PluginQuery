@@ -7,6 +7,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
+import io.netty.channel.Channel;
 import septogeddon.pluginquery.PluginQuery;
 import septogeddon.pluginquery.api.QueryConnection;
 import septogeddon.pluginquery.api.QueryContext;
@@ -28,10 +29,15 @@ public class SpigotPluginQueryCommand implements CommandExecutor {
 			}
 			if (args[0].equalsIgnoreCase("check")) {
 				ArrayList<String> str = new ArrayList<>();
+				ArrayList<String> l = new ArrayList<>();
+				for (Channel c : plugin.getListeners()) {
+					l.add(c.toString());
+				}
 				for (QueryConnection con : PluginQuery.getMessenger().getActiveConnections()) {
 					str.add(con.isConnected() ? "&a"+con.getAddress()+"&7" : "&c"+con.getAddress()+"&7");
 				}
 				send(sender, prefix+"Servers (&e"+str.size()+"&7)&8: &7"+String.join(", ", str));
+				send(sender, prefix+"Listeners (&e"+l.size()+"&7)&8: &7"+String.join(", ", l));
 				return true;
 			}
 		}

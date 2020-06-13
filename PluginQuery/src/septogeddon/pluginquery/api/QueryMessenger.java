@@ -21,7 +21,7 @@ public interface QueryMessenger {
 	 */
 	public QueryConnection injectConnection(Channel channel);
 	/***
-	 * Get all connections (including inactive connections)
+	 * Get all connections (inactive connections aren't included here, they're all goes GC'ed when you stop referring to them)
 	 * @return
 	 */
 	public Collection<? extends QueryConnection> getActiveConnections();

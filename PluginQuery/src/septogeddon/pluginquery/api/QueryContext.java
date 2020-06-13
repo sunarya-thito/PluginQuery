@@ -16,6 +16,8 @@ public interface QueryContext {
 	public static final String HANDLER_WHITELIST = "query_whitelist";
 	public static final String HANDLER_THROTTLE = "query_throttle";
 	
+	public static final String PIPELINE_TIMEOUT = "query_timeout";
+	
 	public static final String PLUGIN_MESSAGING_CHANNEL = "pluginquery:query";
 	public static final String REQUEST_KEY_SHARE = "keyShare";
 	public static final String RESPONSE_NO_PERMISSION = "noPermission";

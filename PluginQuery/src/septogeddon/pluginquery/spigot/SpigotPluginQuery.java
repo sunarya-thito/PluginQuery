@@ -34,8 +34,10 @@ import septogeddon.pluginquery.channel.QueryLimiter;
 import septogeddon.pluginquery.channel.QueryThrottle;
 import septogeddon.pluginquery.channel.QueryWhitelist;
 import septogeddon.pluginquery.netty.QueryInterceptor;
+import septogeddon.pluginquery.netty.QueryPushback;
 import septogeddon.pluginquery.spigot.event.QueryMessageEvent;
 import septogeddon.pluginquery.utils.DataBuffer;
+import septogeddon.pluginquery.utils.Debug;
 import septogeddon.pluginquery.utils.EncryptionToolkit;
 
 public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListener, PluginMessageListener {
@@ -47,16 +49,6 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
 	
 	public void onEnable() {
 		PluginQuery.initializeDefaultMessenger();
-		reloadConfig();
-		QueryPipeline pipe = PluginQuery.getMessenger().getPipeline();
-		QueryDeflater deflater = new QueryDeflater();
-		QueryInflater inflater = new QueryInflater();
-		if (!pipe.addBefore(QueryContext.HANDLER_ENCRYPTOR, deflater)) {
-			pipe.addLast(deflater);
-		}
-		if (!pipe.addAfter(QueryContext.HANDLER_DECRYPTOR, inflater)) {
-			pipe.addFirst(inflater);
-		}
 		PluginQuery.getMessenger().getEventBus().registerListener(this);
 		getCommand("spigotpluginquery").setExecutor(new SpigotPluginQueryCommand(this));
 		getServer().getServicesManager()
@@ -64,7 +56,9 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
 		getLogger().log(Level.INFO, "Registering plugin channel: "+QueryContext.PLUGIN_MESSAGING_CHANNEL);
 		getServer().getMessenger().registerIncomingPluginChannel(this, QueryContext.PLUGIN_MESSAGING_CHANNEL, this);
 		getServer().getMessenger().registerOutgoingPluginChannel(this, QueryContext.PLUGIN_MESSAGING_CHANNEL);
-		register(true);
+		getServer().getScheduler().runTask(this, ()->{
+			register(true);
+		});
 	}
 	
 	public void onDisable() {
@@ -72,6 +66,10 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
 		for (QueryConnection conn : PluginQuery.getMessenger().getActiveConnections()) {
 			conn.disconnect().joinThread();
 		}
+	}
+	
+	public Set<Channel> getListeners() {
+		return listeners;
 	}
 	
 	protected void register(boolean tryAgain) {
@@ -87,16 +85,19 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
 					List<?> list = (List<?>)f.get(serverConnection);
 					for (Object obj : list) {
 						if (!(obj instanceof ChannelFuture)) {
+							QueryPushback.lock = list;
 							break;
 						}
 						Channel future = ((ChannelFuture)obj).channel();
 						getLogger().log(Level.INFO, "Injected server connection listener: "+future);
 						listeners.add(future);
 						// begin listening to incoming channels
-						future.pipeline().addFirst(new QueryInterceptor(PluginQuery.getMessenger()));
+						future.pipeline().addFirst("query_interceptor", new QueryInterceptor(PluginQuery.getMessenger()));
 					}
 				}
 			}
+			if (listeners.isEmpty()) throw new IllegalStateException("empty listener");
+			reloadConfig();
 		} catch (Throwable t) {
 			if (tryAgain) {
 				getLogger().log(Level.WARNING, "Failed to inject server connection. Retrying...");
@@ -150,7 +151,7 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
 	protected void unregister() {
 		for (Channel ch : listeners) {
 			try {
-				ch.pipeline().remove(QueryInterceptor.class);
+				ch.pipeline().remove("query_interceptor");
 			} catch (Throwable t) {
 			}
 		}
@@ -204,6 +205,15 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
 					new QueryEncryptor(encryption.getEncryptor()));
 		} else {
 			getLogger().log(Level.SEVERE, "Failed to register encryption!.");
+		}
+		QueryPipeline pipe = PluginQuery.getMessenger().getPipeline();
+		QueryDeflater deflater = new QueryDeflater();
+		QueryInflater inflater = new QueryInflater();
+		if (!pipe.addBefore(QueryContext.HANDLER_ENCRYPTOR, deflater)) {
+			pipe.addLast(deflater);
+		}
+		if (!pipe.addAfter(QueryContext.HANDLER_DECRYPTOR, inflater)) {
+			pipe.addFirst(inflater);
 		}
 		for (QueryConnection conn : PluginQuery.getMessenger().getActiveConnections()) {
 			getLogger().log(Level.INFO, "Disconnecting "+conn.getAddress());

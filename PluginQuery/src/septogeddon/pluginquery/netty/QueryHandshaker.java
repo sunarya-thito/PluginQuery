@@ -3,9 +3,9 @@ package septogeddon.pluginquery.netty;
 import java.util.UUID;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelPipeline;
 import septogeddon.pluginquery.QueryCompletableFuture;
 import septogeddon.pluginquery.QueryConnectionImpl;
@@ -13,18 +13,17 @@ import septogeddon.pluginquery.api.QueryConnection;
 import septogeddon.pluginquery.api.QueryContext;
 import septogeddon.pluginquery.utils.QueryUtil;
 
-public class QueryHandshaker extends ChannelDuplexHandler {
+public class QueryHandshaker extends ChannelInboundHandlerAdapter {
 
 	protected QueryProtocol protocol;
 	protected QueryCompletableFuture<QueryConnection> future;
 	public QueryHandshaker(QueryProtocol protocol, QueryCompletableFuture<QueryConnection> future) {
 		this.protocol = protocol;
-	}
-	
+	}	
 	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+		ChannelPipeline pipe = ctx.channel().pipeline();
 		if (msg instanceof ByteBuf) {
-			ChannelPipeline pipe = ctx.channel().pipeline();
 			ByteBuf buf = (ByteBuf)msg;
 			buf.markReaderIndex();
 			try {
@@ -81,22 +80,26 @@ public class QueryHandshaker extends ChannelDuplexHandler {
 										}
 									});
 								}
-								
 							} else {
 								throw new IllegalArgumentException("invalid encryption");
 							}
 						} catch (Throwable t) {
 							ctx.channel().close();
 						}
+						buf.release();
 						return;
-					}
+					} 
 				}
 			} catch (Throwable t) {
 			}
 			buf.resetReaderIndex();
-			pipe.remove(this);
 		}
-		super.channelRead(ctx, msg);
+		try {
+			pipe.remove(this);
+			pipe.remove(QueryContext.PIPELINE_TIMEOUT);
+		} catch (Throwable t) {
+		}
+		ctx.fireChannelRead(msg);
 	}
 	
 	@Override

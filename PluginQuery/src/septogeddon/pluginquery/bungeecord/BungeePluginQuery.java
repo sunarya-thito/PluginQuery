@@ -71,15 +71,6 @@ public class BungeePluginQuery extends Plugin implements Listener, QueryListener
 		getLogger().log(Level.INFO, "Initializing PluginQuery...");
 		PluginQuery.initializeDefaultMessenger();
 		reloadConfig();
-		QueryPipeline pipe = PluginQuery.getMessenger().getPipeline();
-		QueryDeflater deflater = new QueryDeflater();
-		QueryInflater inflater = new QueryInflater();
-		if (!pipe.addBefore(QueryContext.HANDLER_ENCRYPTOR, deflater)) {
-			pipe.addLast(deflater);
-		}
-		if (!pipe.addAfter(QueryContext.HANDLER_DECRYPTOR, inflater)) {
-			pipe.addFirst(inflater);
-		}
 		PluginQuery.getMessenger().getEventBus().registerListener(this);
 		getProxy().getPluginManager().registerCommand(this, new BungeePluginQueryCommand(this));
 		getProxy().getPluginManager().registerListener(this, this);
@@ -192,6 +183,15 @@ public class BungeePluginQuery extends Plugin implements Listener, QueryListener
 			PluginQuery.getMessenger().getPipeline().addLast(
 					new QueryDecryptor(encryption.getDecryptor()),
 					new QueryEncryptor(encryption.getEncryptor()));
+		}
+		QueryPipeline pipe = PluginQuery.getMessenger().getPipeline();
+		QueryDeflater deflater = new QueryDeflater();
+		QueryInflater inflater = new QueryInflater();
+		if (!pipe.addBefore(QueryContext.HANDLER_ENCRYPTOR, deflater)) {
+			pipe.addLast(deflater);
+		}
+		if (!pipe.addAfter(QueryContext.HANDLER_DECRYPTOR, inflater)) {
+			pipe.addFirst(inflater);
 		}
 		disabling = false;
 		for (QueryConnection conn : PluginQuery.getMessenger().getActiveConnections()) {

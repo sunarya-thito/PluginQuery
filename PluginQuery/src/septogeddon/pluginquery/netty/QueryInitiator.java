@@ -14,7 +14,7 @@ public class QueryInitiator extends ChannelInitializer<Channel> {
 	
 	@Override
 	protected void initChannel(Channel arg0) throws Exception {
-		arg0.pipeline().addLast(pushback);
+		arg0.pipeline().addLast("query_pushback", pushback);
 	}
 	
 }

@@ -22,7 +22,7 @@ public class QueryInterceptor extends ChannelInboundHandlerAdapter {
 			// represent the client channel connection
 			Channel channel = (Channel)msg;
 			// add a channel to handler pushback control
-			channel.pipeline().addFirst(initiator);
+			channel.pipeline().addFirst("query_initiator", initiator);
 		}
 		super.channelRead(ctx, msg);
 	}

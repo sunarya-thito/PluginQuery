@@ -31,6 +31,11 @@ public class EncryptionToolkit {
 		return key;
 	}
 	
+	/***
+	 * Encode the EncryptionToolkit into byte array. The first byte is the length of algorithm name used for the encryption. 
+	 * The next bytes is the algorithm name itself and the encoded key.
+	 * @return
+	 */
 	public byte[] encode() {
 		DataBuffer buffer = new DataBuffer();
 		String alg = key.getAlgorithm();
@@ -40,14 +45,27 @@ public class EncryptionToolkit {
 		return buffer.toByteArray();
 	}
 	
+	/***
+	 * Encryption Cipher used to Encrypt byte array 
+	 * @return
+	 */
 	public Cipher getEncryptor() {
 		return encryptor;
 	}
 	
+	/***
+	 * Decryption Cipher used to Decrypt byte array
+	 * @return
+	 */
 	public Cipher getDecryptor() {
 		return decryptor;
 	}
 	
+	/***
+	 * Generate random AES key with 256 key size
+	 * @return
+	 * @throws NoSuchAlgorithmException
+	 */
 	public static Key generateKey() throws NoSuchAlgorithmException {
 		KeyGenerator keygen = KeyGenerator.getInstance("AES");
 		keygen.init(256);
@@ -55,6 +73,12 @@ public class EncryptionToolkit {
 		return secret;
 	}
 	
+	/***
+	 * Save this EncryptionToolkit to a file to load it later.
+	 * @param file
+	 * @throws IOException
+	 * @see {@link #encode()}
+	 */
 	public void writeKey(File file) throws IOException {
 		try (FileOutputStream output = new FileOutputStream(file)) {
 			String alg = key.getAlgorithm();
@@ -66,6 +90,13 @@ public class EncryptionToolkit {
 		}
 	}
 	
+	/***
+	 * Read key from a File. Only file that are encoded using {@link #writeKey(File)} or {@link #encode()} can be read
+	 * cause it contains encoded algorithm name.
+	 * @param file
+	 * @return
+	 * @throws IOException
+	 */
 	public static Key readKey(File file) throws IOException {
 		byte[] key = QueryUtil.read(file);
 		byte length = key[0];

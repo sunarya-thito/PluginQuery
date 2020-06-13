@@ -14,7 +14,6 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
-import io.netty.handler.timeout.ReadTimeoutHandler;
 import septogeddon.pluginquery.api.QueryConnection;
 import septogeddon.pluginquery.api.QueryContext;
 import septogeddon.pluginquery.api.QueryEventBus;
@@ -23,6 +22,7 @@ import septogeddon.pluginquery.api.QueryMessenger;
 import septogeddon.pluginquery.api.QueryMetadata;
 import septogeddon.pluginquery.netty.QueryHandshaker;
 import septogeddon.pluginquery.netty.QueryProtocol;
+import septogeddon.pluginquery.netty.QueryReadTimeout;
 import septogeddon.pluginquery.utils.QueryUtil;
 
 public class QueryConnectionImpl implements QueryConnection {
@@ -53,14 +53,15 @@ public class QueryConnectionImpl implements QueryConnection {
 	protected void prepareChannel(QueryCompletableFuture<QueryConnection> conn) {
 		if (channel != null) {
 			connecting = true;
-			getChannel().pipeline().addFirst(
-					new ReadTimeoutHandler(getMessenger().getMetadata().getData(QueryContext.METAKEY_READ_TIMEOUT, 1000L * 10), TimeUnit.MILLISECONDS),
+			getChannel().pipeline().addFirst(QueryContext.PIPELINE_TIMEOUT, new QueryReadTimeout(this, getMessenger().getMetadata().getData(QueryContext.METAKEY_READ_TIMEOUT, 1000L * 30), TimeUnit.MILLISECONDS));
+			getChannel().pipeline().addFirst("query_handshaker",
 					new QueryHandshaker(protocol,conn)
 					);
 		}
 	}
 	
 	protected void connectionDisconnected() {
+		connecting = false;
 		getMessenger().getPipeline().dispatchInactive(this);
 		getEventBus().dispatchConnectionState(this);
 		queues.clear();
@@ -171,7 +172,7 @@ public class QueryConnectionImpl implements QueryConnection {
 	}
 	
 	public QueryFuture<QueryConnection> connect(int currentTime) {
-		QueryUtil.illegalState(isConnecting(), "already connecting");
+		if (isConnecting()) return new QueryChannelFuture<>(null, this);
 		QueryUtil.illegalState(isConnected(), "already connected");
 		connecting = true;
 		QueryCompletableFuture<QueryConnection> fut = new QueryCompletableFuture<>();
@@ -230,7 +231,7 @@ public class QueryConnectionImpl implements QueryConnection {
 	public QueryFuture<QueryConnection> disconnect() {
 		connecting = false;
 		ChannelFuture future;
-		if (channel != null) {
+		if (channel != null && getMessenger().getActiveConnections().contains(this)) {
 			if (channel.isOpen()) {
 				future = channel.close();
 			} else future = null;
