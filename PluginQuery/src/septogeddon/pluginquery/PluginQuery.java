@@ -29,6 +29,7 @@ public class PluginQuery {
 	 * Initialize PluginQuery with default {@link QueryMessenger}
 	 */
 	public static void initializeDefaultMessenger() {
+		if (getMessenger() != null) return;
 		setMessenger(new QueryMessengerImpl());
 	}
 	

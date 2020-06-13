@@ -147,7 +147,7 @@ public class QueryPipelineImpl implements QueryPipeline {
 			try {
 				handlers.get(0).onCaughtException(connection, thrown);
 			} catch (Throwable e) {
-				e.printStackTrace();
+				QueryUtil.Throw(e);
 			}
 		} else thrown.printStackTrace();
 	}

@@ -1,18 +1,21 @@
 package septogeddon.pluginquery.bungeecord.event;
 
+import net.md_5.bungee.api.plugin.Cancellable;
 import net.md_5.bungee.api.plugin.Event;
 import septogeddon.pluginquery.api.QueryConnection;
+import septogeddon.pluginquery.api.QueryContext;
 
 /***
- * This class made to let you migrate from PluginMessaging easily
+ * This class made to let you migrate from PluginMessaging easily. This event does not listen to {@link QueryContext#PLUGIN_MESSAGING_CHANNEL}
  * @author Septogeddon
  *
  */
-public class QueryMessageEvent extends Event {
+public class QueryMessageEvent extends Event implements Cancellable {
 
 	private final String channel;
 	private final byte[] message;
 	private final QueryConnection connection;
+	private boolean cancel;
 	
 	public QueryMessageEvent(QueryConnection connection,String channel, byte[] message) {
 		this.connection = connection;
@@ -59,9 +62,35 @@ public class QueryMessageEvent extends Event {
 	/***
 	 * The query message
 	 * @return
+	 * @see #getData()
 	 */
 	public byte[] getMessage() {
 		return message;
+	}
+	
+	/***
+	 * Synonym of {@link #getMessage()}
+	 * @return
+	 * @see #getMessage()
+	 */
+	public byte[] getData() {
+		return message;
+	}
+
+	/***
+	 * Check if this event has been cancelled by previous lower priority listener
+	 */
+	@Override
+	public boolean isCancelled() {
+		return cancel;
+	}
+	
+	/***
+	 * Cancel this event
+	 */
+	@Override
+	public void setCancelled(boolean arg0) {
+		this.cancel = arg0;
 	}
 	
 }

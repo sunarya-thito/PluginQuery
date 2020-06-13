@@ -18,8 +18,9 @@ public class QueryDeflater extends QueryChannelHandler {
 	public byte[] onSending(QueryConnection connection, byte[] bytes) throws Exception {
 		return super.onSending(connection, compress(bytes));
 	}
-
+	
 	public static byte[] compress(byte[] data) throws IOException {
+		if (data.length <= 0) return data;
 		Deflater deflater = new Deflater();
 		deflater.setInput(data);
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);

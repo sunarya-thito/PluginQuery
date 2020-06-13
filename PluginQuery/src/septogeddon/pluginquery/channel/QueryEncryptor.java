@@ -16,12 +16,13 @@ public class QueryEncryptor extends QueryChannelHandler {
 	
 	@Override
 	public byte[] onSending(QueryConnection connection, byte[] bytes) throws Exception {
-		bytes = cipher.doFinal(bytes);
+		if (bytes.length > 0) bytes = cipher.doFinal(bytes);
 		return super.onSending(connection, bytes);
 	}
 	
 	@Override
 	public void onCaughtException(QueryConnection connection, Throwable thrown) throws Exception {
+		connection.disconnect();
 	}
 	
 }

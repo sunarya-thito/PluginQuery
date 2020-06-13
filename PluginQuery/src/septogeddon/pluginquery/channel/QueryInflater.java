@@ -21,6 +21,7 @@ public class QueryInflater extends QueryChannelHandler {
 	}
 
 	public static byte[] decompress(byte[] data) throws IOException, DataFormatException {
+		if (data.length <= 0) return data;
 		Inflater inflater = new Inflater();
 		inflater.setInput(data);
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);

@@ -34,6 +34,7 @@ import septogeddon.pluginquery.channel.QueryLimiter;
 import septogeddon.pluginquery.channel.QueryThrottle;
 import septogeddon.pluginquery.channel.QueryWhitelist;
 import septogeddon.pluginquery.netty.QueryInterceptor;
+import septogeddon.pluginquery.spigot.event.QueryMessageEvent;
 import septogeddon.pluginquery.utils.DataBuffer;
 import septogeddon.pluginquery.utils.EncryptionToolkit;
 
@@ -172,6 +173,9 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
 				buffer.writeUTF(configuredServerName);
 				connection.sendQuery(channel, buffer.toByteArray());
 			}
+		} else {
+			// custom QueryMessageEvent handling
+			getServer().getPluginManager().callEvent(new QueryMessageEvent(connection, channel, message));
 		}
 	}
 	
