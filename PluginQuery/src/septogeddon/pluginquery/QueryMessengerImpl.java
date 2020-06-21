@@ -7,9 +7,6 @@ import java.util.List;
 
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.epoll.Epoll;
-import io.netty.channel.epoll.EpollEventLoopGroup;
-import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import septogeddon.pluginquery.api.QueryConnection;
@@ -27,10 +24,15 @@ public class QueryMessengerImpl implements QueryMessenger {
 	private Class<? extends Channel> channelClass;
 	protected final List<QueryConnection> connections = new ArrayList<>();
 	public QueryMessengerImpl() {
-		if (Epoll.isAvailable()) {
-			eventLoop = new EpollEventLoopGroup();
-			channelClass = EpollSocketChannel.class;
-		} else {
+		try {
+			if (io.netty.channel.epoll.Epoll.isAvailable()) {
+				eventLoop = new io.netty.channel.epoll.EpollEventLoopGroup();
+				channelClass = io.netty.channel.epoll.EpollSocketChannel.class;
+			} else {
+				eventLoop = new NioEventLoopGroup();
+				channelClass = NioSocketChannel.class;
+			}
+		} catch (Throwable t) {
 			eventLoop = new NioEventLoopGroup();
 			channelClass = NioSocketChannel.class;
 		}
