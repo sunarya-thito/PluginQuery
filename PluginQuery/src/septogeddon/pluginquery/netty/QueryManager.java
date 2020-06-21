@@ -24,7 +24,6 @@ public class QueryManager extends SimpleChannelInboundHandler<QueryMessage> {
 	
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-		cause.printStackTrace();
 	}
 
 }

@@ -37,7 +37,7 @@ public class QueryMessengerImpl implements QueryMessenger {
 	}
 	@Override
 	public QueryConnection newConnection(SocketAddress address) {
-		QueryConnectionImpl conn = new QueryConnectionImpl(this, address, null) {
+		PreparedQueryConnection conn = new PreparedQueryConnection(this, address) {
 			
 			@Override
 			protected void connectionDisconnected() {
@@ -72,7 +72,7 @@ public class QueryMessengerImpl implements QueryMessenger {
 				}
 			}
 		}
-		QueryConnectionImpl conn = new QueryConnectionImpl(this, channel.remoteAddress(), channel) {
+		InjectedQueryConnection conn = new InjectedQueryConnection(this, channel) {
 			
 			@Override
 			protected void connectionDisconnected() {

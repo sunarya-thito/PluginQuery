@@ -11,7 +11,7 @@ public class QuerySplitter extends MessageToByteEncoder<ByteBuf> {
 		final int bodyLen = msg.readableBytes();
 		final int headerLen = byteLength(bodyLen);
 		out.ensureWritable(headerLen + bodyLen);
-		writeUnsignedInteger(bodyLen, out);
+		writeUnsignedShort(bodyLen, out);
 		out.writeBytes(msg);
 	}
 
@@ -31,7 +31,7 @@ public class QuerySplitter extends MessageToByteEncoder<ByteBuf> {
 		return 5;
 	}
 
-	private void writeUnsignedInteger(int value, final ByteBuf output) {
+	private void writeUnsignedShort(int value, final ByteBuf output) {
 		do {
 			int part = value & 0x7F;
 			value >>>= 7;

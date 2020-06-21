@@ -6,7 +6,6 @@ import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 import javax.crypto.NoSuchPaddingException;
@@ -153,7 +152,7 @@ public class BungeePluginQuery extends Plugin implements Listener, QueryListener
 			messenger.getPipeline().addLast(new QueryThrottle(throttle));
 		}
 		long reconnectDelay = getQueryConfig().getOption(QueryContext.RECONNECT_DELAY).longValue();
-		if (reconnectDelay > 0) {
+		if (reconnectDelay >= 0) {
 			messenger.getMetadata().setData(QueryContext.METAKEY_RECONNECT_DELAY, reconnectDelay);
 		}
 		int maxConnection = getQueryConfig().getOption(QueryContext.CONNECTION_LIMIT).intValue();
@@ -221,7 +220,7 @@ public class BungeePluginQuery extends Plugin implements Listener, QueryListener
 			getProxy().getPluginManager().callEvent(new QueryMessageEvent(connection, channel, message));
 		}
 	}
-
+	
 	@Override
 	public void onConnectionStateChange(QueryConnection connection) {
 		if (!connection.isConnected()) {
@@ -233,11 +232,7 @@ public class BungeePluginQuery extends Plugin implements Listener, QueryListener
 					return;
 				}
 				connection.getMetadata().setData(RECONNECT_TRY_TIMES, times + 1);
-				long reconnectDelay = connection.getMetadata().getData(QueryContext.METAKEY_RECONNECT_DELAY, 1000L);
-				if (reconnectDelay < 0) return;
-				getProxy().getScheduler().schedule(this, ()->{
-					connection.connect();
-				}, reconnectDelay, TimeUnit.MILLISECONDS);
+				connection.connect();
 			}
 		} else {
 			connection.getMetadata().setData(RECONNECT_TRY_TIMES, null);

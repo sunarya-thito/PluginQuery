@@ -31,11 +31,12 @@ public class QueryChannelFuture<T> extends QueryFutureAdapter<T> implements Chan
 
 	@Override
 	public void operationComplete(ChannelFuture arg0) throws Exception {
-		if (arg0 != null)
-		if (arg0.isSuccess()) {
-			complete(defaultResult);
-		} else {
-			completeExceptionally(arg0.cause());
+		if (arg0 != null) {
+			if (arg0.isSuccess()) {
+				complete(defaultResult);
+			} else {
+				completeExceptionally(arg0.cause());
+			}
 		}
 	}
 

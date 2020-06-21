@@ -12,7 +12,7 @@ public class QueryDecoder extends ByteToMessageDecoder {
 	@Override
 	protected void decode(ChannelHandlerContext arg0, ByteBuf arg1, List<Object> arg2) throws Exception {
 		if (arg1.readableBytes() <= 0) return;
-		int length = arg1.readInt();
+		int length = arg1.readByte();
 		byte[] buf = new byte[length];
 		arg1.readBytes(buf);
 		// ignoring charset

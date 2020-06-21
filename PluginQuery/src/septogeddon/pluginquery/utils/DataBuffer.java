@@ -204,6 +204,14 @@ public class DataBuffer implements DataInput, DataOutput {
 	public void clear() {
 		pos = count = 0;
 	}
+	
+	/***
+	 * Flush the byte array
+	 */
+	public void finalize() {
+		clear();
+		buf = new byte[32];
+	}
 
 	private void grow(int minCapacity) {
 		count -= pos;

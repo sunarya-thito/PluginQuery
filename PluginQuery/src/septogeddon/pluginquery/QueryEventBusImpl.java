@@ -52,7 +52,6 @@ public class QueryEventBusImpl implements QueryEventBus {
 
 	@Override
 	public void dispatchConnectionState(QueryConnection connection) {
-		if (connection.isConnecting()) return;
 		for (QueryListener listener : listeners) {
 			try {
 				listener.onConnectionStateChange(connection);

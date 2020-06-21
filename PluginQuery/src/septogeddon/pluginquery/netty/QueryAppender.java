@@ -23,7 +23,7 @@ public class QueryAppender extends ByteToMessageDecoder {
 			}
 			buf[i] = in.readByte();
 			if (buf[i] >= 0) {
-				final int length = readUnsignedInteger(Unpooled.wrappedBuffer(buf));
+				final int length = readUnsignedShort(Unpooled.wrappedBuffer(buf));
 				if (length == 0) {
 					throw new IOException("invalid packet");
 				}
@@ -47,7 +47,7 @@ public class QueryAppender extends ByteToMessageDecoder {
 		throw new IOException("packet too large");
 	}
 
-	public int readUnsignedInteger(final ByteBuf input) throws IOException {
+	public int readUnsignedShort(final ByteBuf input) throws IOException {
 		int out = 0;
 		int bytes = 0;
 		byte in;

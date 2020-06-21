@@ -3,21 +3,17 @@ package septogeddon.pluginquery.netty;
 import java.util.UUID;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelPipeline;
-import septogeddon.pluginquery.QueryCompletableFuture;
-import septogeddon.pluginquery.QueryConnectionImpl;
-import septogeddon.pluginquery.api.QueryConnection;
+import septogeddon.pluginquery.PreparedQueryConnection;
 import septogeddon.pluginquery.api.QueryContext;
 import septogeddon.pluginquery.utils.QueryUtil;
 
 public class QueryHandshaker extends ChannelInboundHandlerAdapter {
 
 	protected QueryProtocol protocol;
-	protected QueryCompletableFuture<QueryConnection> future;
-	public QueryHandshaker(QueryProtocol protocol, QueryCompletableFuture<QueryConnection> future) {
+	public QueryHandshaker(QueryProtocol protocol) {
 		this.protocol = protocol;
 	}	
 	@Override
@@ -42,9 +38,7 @@ public class QueryHandshaker extends ChannelInboundHandlerAdapter {
 						length = buf.readByte();
 						bytes = new byte[length];
 						buf.readBytes(bytes);
-						boolean response = buf.readBoolean();
 						try {
-							byte[] encryptedUUID = bytes;
 							// decrypt UUID
 							bytes = protocol.getMessenger().getPipeline().dispatchReceiving(protocol.getConnection(), bytes);
 							QueryUtil.nonNull(bytes, "unique handshake token");
@@ -55,40 +49,19 @@ public class QueryHandshaker extends ChannelInboundHandlerAdapter {
 								// we don't use read timeout, keep it open as long as possible
 								pipe.forEach(entry->pipe.remove(entry.getKey()));
 								// initialize query channel
-								if (future != null) {
-									future.complete(protocol.getConnection());
-								}
-								QueryConnectionImpl.handshakenConnection(protocol, pipe);
-								if (response) {
-									ByteBuf buffer = ctx.alloc().directBuffer();
-									
-									// send "query"
-									buffer.writeByte((byte)QueryContext.PACKET_HANDSHAKE.length());
-									buffer.writeBytes(QueryContext.PACKET_HANDSHAKE.getBytes());
-									// send UUID
-									buffer.writeLong(most);
-									buffer.writeLong(least);
-									// send encrypted UUID
-									buffer.writeByte((byte)encryptedUUID.length);
-									buffer.writeBytes(encryptedUUID);
-									// don't ask to response, otherwise, it will create infinite loop
-									buffer.writeBoolean(false);
-									
-									ctx.writeAndFlush(buffer).addListener((ChannelFuture f)->{
-										if (!f.isSuccess()) {
-											f.channel().close();
-										}
-									});
-								}
+								PreparedQueryConnection.handshakenConnection(protocol, pipe);
 							} else {
 								throw new IllegalArgumentException("invalid encryption");
 							}
 						} catch (Throwable t) {
-							ctx.channel().close();
+							protocol.getConnection().disconnect();
 						}
 						buf.release();
 						return;
 					} 
+				} else {
+					byte[] toAll = new byte[buf.readableBytes()];
+					buf.readBytes(toAll);
 				}
 			} catch (Throwable t) {
 			}
@@ -96,10 +69,19 @@ public class QueryHandshaker extends ChannelInboundHandlerAdapter {
 		}
 		try {
 			pipe.remove(this);
-			pipe.remove(QueryContext.PIPELINE_TIMEOUT);
+			remove(pipe, QueryContext.PIPELINE_TIMEOUT);
+			remove(pipe, "query_initiator");
+			remove(pipe, "query_pushback");
 		} catch (Throwable t) {
 		}
 		ctx.fireChannelRead(msg);
+	}
+	
+	private void remove(ChannelPipeline pipe, String name) {
+		try {
+			pipe.remove(name);
+		} catch (Throwable t) {
+		}
 	}
 	
 	@Override

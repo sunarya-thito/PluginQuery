@@ -1,5 +1,5 @@
 name: PluginQuery
-version: 1.0.22
+version: 1.0.30
 author: Septogeddon
 main: septogeddon.pluginquery.bungeecord.BungeePluginQuery
 description: Allows you to send plugin message between servers

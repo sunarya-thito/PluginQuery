@@ -37,7 +37,6 @@ import septogeddon.pluginquery.netty.QueryInterceptor;
 import septogeddon.pluginquery.netty.QueryPushback;
 import septogeddon.pluginquery.spigot.event.QueryMessageEvent;
 import septogeddon.pluginquery.utils.DataBuffer;
-import septogeddon.pluginquery.utils.Debug;
 import septogeddon.pluginquery.utils.EncryptionToolkit;
 
 public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListener, PluginMessageListener {

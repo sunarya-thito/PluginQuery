@@ -64,4 +64,19 @@ public interface QueryMessenger {
 		return count != 0;
 	}
 	
+	/***
+	 * broadcast query to all active connections
+	 * @param channel
+	 * @param message
+	 * @param queue
+	 * @return
+	 */
+	public default boolean broadcastQuery(String channel, byte[] message, boolean queue) {
+		int count = 0;
+		for (QueryConnection connection : getActiveConnections()) {
+			connection.sendQuery(channel, message, queue);
+		}
+		return count != 0;
+	}
+	
 }

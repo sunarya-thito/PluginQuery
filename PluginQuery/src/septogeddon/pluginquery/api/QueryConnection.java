@@ -22,10 +22,10 @@ public interface QueryConnection {
 	 */
 	public boolean isConnected();
 	/***
-	 * Check if the connection is currently trying to connect
+	 * Check if both connection already handshaken and ready to use
 	 * @return
 	 */
-	public boolean isConnecting();
+	public boolean isHandshaken();
 	/***
 	 * Get the messenger
 	 * @return
