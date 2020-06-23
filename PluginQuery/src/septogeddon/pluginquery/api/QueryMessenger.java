@@ -60,6 +60,7 @@ public interface QueryMessenger {
 		int count = 0;
 		for (QueryConnection connection : getActiveConnections()) {
 			connection.sendQuery(channel, message);
+			count++;
 		}
 		return count != 0;
 	}
@@ -75,6 +76,7 @@ public interface QueryMessenger {
 		int count = 0;
 		for (QueryConnection connection : getActiveConnections()) {
 			connection.sendQuery(channel, message, queue);
+			count++;
 		}
 		return count != 0;
 	}
