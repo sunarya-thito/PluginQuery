@@ -4,6 +4,11 @@ import java.util.Collection;
 
 import septogeddon.pluginquery.QueryChannelHandler;
 
+/***
+ * Pipeline for Query Intercepting
+ * @author Thito Yalasatria Sunarya
+ *
+ */
 public interface QueryPipeline {
 
 	/***

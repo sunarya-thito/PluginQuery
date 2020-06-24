@@ -1,5 +1,10 @@
 package septogeddon.pluginquery.api;
 
+/***
+ * Handle non-persistent metadata
+ * @author Thito Yalasatria Sunarya
+ *
+ */
 public interface QueryMetadata {
 	
 	/***

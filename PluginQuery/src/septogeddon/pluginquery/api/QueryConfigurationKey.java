@@ -1,8 +1,15 @@
 package septogeddon.pluginquery.api;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+/***
+ * Configuration key that holds key/path and also a serializer handler
+ * @author Thito Yalasatria Sunarya
+ *
+ * @param <T> The expected value
+ */
 public interface QueryConfigurationKey<T> {
 
 	/***
@@ -23,6 +30,11 @@ public interface QueryConfigurationKey<T> {
 	 */
 	public Object set(T t);
 	
+	/***
+	 * Create new boolean parser
+	 * @param key the key
+	 * @return the created configuration key
+	 */
 	public static QueryConfigurationKey<Boolean> newBoolean(String key) {
 		return new QueryConfigurationKey<Boolean>() {
 
@@ -33,6 +45,7 @@ public interface QueryConfigurationKey<T> {
 
 			@Override
 			public Boolean get(Object from) {
+				if (from instanceof String) return "true".equals(from);
 				return from == Boolean.TRUE;
 			}
 
@@ -44,6 +57,11 @@ public interface QueryConfigurationKey<T> {
 		};
 	}
 	
+	/***
+	 * Create new list of string parser
+	 * @param key the key
+	 * @return the created configuration key
+	 */
 	public static QueryConfigurationKey<List<String>> newStringList(String key) {
 		return new QueryConfigurationKey<List<String>>() {
 
@@ -62,7 +80,8 @@ public interface QueryConfigurationKey<T> {
 						}
 					}
 				} else if (from instanceof String) {
-					list.add((String)from);
+					// Comma-Separated-Value
+					list.addAll(Arrays.asList(((String)from).split(",")));
 				}
 				return list;
 			}
@@ -75,6 +94,11 @@ public interface QueryConfigurationKey<T> {
 		
 	}
 	
+	/***
+	 * Create new string parser
+	 * @param key the key
+	 * @return the created configuration key
+	 */
 	public static QueryConfigurationKey<String> newString(String key) {
 		return new QueryConfigurationKey<String>() {
 
@@ -96,6 +120,11 @@ public interface QueryConfigurationKey<T> {
 		
 	}
 	
+	/***
+	 * Create new number parser
+	 * @param key the key
+	 * @return the created configuration key
+	 */
 	public static QueryConfigurationKey<Number> newNumber(String key) {
 		return new QueryConfigurationKey<Number>() {
 
@@ -106,6 +135,12 @@ public interface QueryConfigurationKey<T> {
 
 			@Override
 			public Number get(Object from) {
+				if (from instanceof String) {
+					try {
+						return Double.parseDouble((String)from);
+					} catch (Throwable t) {
+					}
+				}
 				return from instanceof Number ? (Number)from : 0;
 			}
 

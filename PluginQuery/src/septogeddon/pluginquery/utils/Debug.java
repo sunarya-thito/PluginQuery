@@ -20,12 +20,15 @@ public class Debug {
 	public static void debug(Object obj) {
 		System.out.println("DEBUG: "+obj);
 	}
-	
-	public static void main(String[]args) throws Throwable {
+	public static void main(String[]args) {
+		System.out.println(Byte.MAX_VALUE);
+	}
+	public static void main2(String[]args) throws Throwable {
 		PluginQuery.initializeDefaultMessenger();
 		QueryMessenger messenger = PluginQuery.getMessenger();
-		QueryConnection connection = messenger.newConnection(new InetSocketAddress("131.153.48.90", 25619));
-		EncryptionToolkit toolkit = new EncryptionToolkit(EncryptionToolkit.readKey(new File("D:\\BungeeCordServer\\plugins\\PluginQuery\\secret.key")));
+//		QueryConnection connection = messenger.newConnection(new InetSocketAddress("131.153.48.90", 25619));
+		QueryConnection connection = messenger.newConnection(new InetSocketAddress("localhost", 25565));
+		EncryptionToolkit toolkit = new EncryptionToolkit(EncryptionToolkit.readKey(new File("D:\\TestServer\\plugins\\PluginQuery\\secret.key")));
 		messenger.getPipeline().addLast(
 				new QueryDecryptor(toolkit.getDecryptor()),
 				new QueryDeflater(),

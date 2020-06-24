@@ -1,5 +1,10 @@
 package septogeddon.pluginquery.api;
 
+/***
+ * Listen to Connection State Change and Incoming Query Message
+ * @author Thito Yalasatria Sunarya
+ *
+ */
 public interface QueryListener {
 
 	/***

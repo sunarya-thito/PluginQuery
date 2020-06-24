@@ -13,6 +13,7 @@ public class PluginQuery {
 	 */
 	@SuppressWarnings("all")
 	public static QueryMessenger getMessenger() {
+		QueryUtil.illegalState(messengerInstance == null, "not initialized");
 		return messengerInstance;
 	}
 	

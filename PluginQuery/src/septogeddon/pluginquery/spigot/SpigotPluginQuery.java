@@ -19,7 +19,7 @@ import org.bukkit.plugin.messaging.PluginMessageListener;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import septogeddon.pluginquery.PluginQuery;
-import septogeddon.pluginquery.QueryConfigurationImpl;
+import septogeddon.pluginquery.YamlQueryConfiguration;
 import septogeddon.pluginquery.api.QueryConfiguration;
 import septogeddon.pluginquery.api.QueryConnection;
 import septogeddon.pluginquery.api.QueryContext;
@@ -43,7 +43,7 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
 	
 	private Set<Channel> listeners = ConcurrentHashMap.newKeySet();
 	
-	private QueryConfigurationImpl config = new QueryConfigurationImpl();
+	private YamlQueryConfiguration config = new YamlQueryConfiguration();
 	private EncryptionToolkit encryption;
 	
 	public void onEnable() {

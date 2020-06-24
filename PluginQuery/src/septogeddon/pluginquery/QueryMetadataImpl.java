@@ -11,21 +11,26 @@ import septogeddon.pluginquery.utils.QueryUtil;
 public class QueryMetadataImpl implements QueryMetadata {
 
 	private Set<QueryMetadata> parents = ConcurrentHashMap.newKeySet();
-	private Map<String, Object> map = new ConcurrentHashMap<>();
+	private Map<String, Set<Object>> map = new ConcurrentHashMap<>();
 	@Override
 	public <T> T getData(QueryMetadataKey<T> key) {
 		QueryUtil.nonNull(key, "key");
-		Object object = map.get(key.name());
+		Set<Object> object = map.get(key.name());
 		if (object == null) {
 			for (QueryMetadata parent : parents) {
 				T value = parent.getData(key, null);
 				if (value != null) {
-					object = value;
-					break;
+					return value;
 				}
 			}
+			return null;
 		}
-		return key.deserialize(object);
+		for (Object test : object) {
+			if (key.isInstance(test)) {
+				return key.cast(test);
+			}
+		}
+		return null;
 	}
 
 	@Override
@@ -35,23 +40,28 @@ public class QueryMetadataImpl implements QueryMetadata {
 			map.remove(key.name());
 			return;
 		}
-		map.put(key.name(), key.serialize(value));
+		map.computeIfAbsent(key.name(), name->ConcurrentHashMap.newKeySet()).add(value);
 	}
 
 	@Override
 	public <T> T getData(QueryMetadataKey<T> key, T defaultValue) {
 		QueryUtil.nonNull(key, "key");
-		Object object = map.get(key.name());
+		Set<Object> object = map.get(key.name());
 		if (object == null) {
 			for (QueryMetadata parent : parents) {
 				T value = parent.getData(key, null);
 				if (value != null) {
-					object = value;
-					break;
+					return value;
 				}
 			}
+			return defaultValue;
 		}
-		return object == null ? defaultValue : key.deserialize(object);
+		for (Object test : object) {
+			if (key.isInstance(test)) {
+				return key.cast(test);
+			}
+		}
+		return defaultValue;
 	}
 
 	@Override

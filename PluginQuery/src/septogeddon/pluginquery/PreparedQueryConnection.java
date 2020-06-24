@@ -281,12 +281,11 @@ public class PreparedQueryConnection implements QueryConnection {
 	
 	private void sendDirectly(QueueQuery a) {
 		if (isConnected()) {
-			ChannelFutureListener futureListener = (ChannelFuture f)->{
+			ChannelFutureListener futureListener = f->{
 				// wrapping a listener, what a shame...
 				if (f.isSuccess()) {
 					a.future.complete(this);
 				} else {
-					f.cause().printStackTrace();
 					a.future.completeExceptionally(f.cause());
 				}
 			};

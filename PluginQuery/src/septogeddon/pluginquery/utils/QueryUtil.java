@@ -6,6 +6,11 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+/***
+ * Utilities that are useful for handling Queries
+ * @author Thito Yalasatria Sunarya
+ *
+ */
 public class QueryUtil {
 	
 	/***

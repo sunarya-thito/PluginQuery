@@ -19,7 +19,7 @@ import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.event.EventHandler;
 import septogeddon.pluginquery.PluginQuery;
-import septogeddon.pluginquery.QueryConfigurationImpl;
+import septogeddon.pluginquery.YamlQueryConfiguration;
 import septogeddon.pluginquery.api.QueryConfiguration;
 import septogeddon.pluginquery.api.QueryConnection;
 import septogeddon.pluginquery.api.QueryContext;
@@ -50,7 +50,7 @@ public class BungeePluginQuery extends Plugin implements Listener, QueryListener
 	/***
 	 * Get active connection for a {@link net.md_5.bungee.api.config.ServerInfo}
 	 * @param info
-	 * @return
+	 * @return a QueryConnection used to connect to specified server
 	 */
 	public static QueryConnection getConnection(ServerInfo info) {
 		for (QueryConnection conn : PluginQuery.getMessenger().getActiveConnections()) {
@@ -61,7 +61,7 @@ public class BungeePluginQuery extends Plugin implements Listener, QueryListener
 		return null;
 	}
 	
-	private QueryConfigurationImpl config = new QueryConfigurationImpl();
+	private YamlQueryConfiguration config = new YamlQueryConfiguration();
 	private EncryptionToolkit encryption;
 	private boolean disabling = false;
 	@Override
@@ -136,7 +136,13 @@ public class BungeePluginQuery extends Plugin implements Listener, QueryListener
 		disabling = true;
 		QueryMessenger messenger = PluginQuery.getMessenger();
 		try {
-			config.loadConfiguration(new File(getDataFolder(), "config.yml"));
+			File file = new File(getDataFolder(), "config.yml");
+			if (file.exists()) {
+				config.loadConfiguration(file);
+			} else {
+				file.getParentFile().mkdirs();
+				config.saveConfiguration(file);
+			}
 		} catch (IOException e) {
 			getLogger().log(Level.SEVERE, "Failed to load config.yml", e);
 		}

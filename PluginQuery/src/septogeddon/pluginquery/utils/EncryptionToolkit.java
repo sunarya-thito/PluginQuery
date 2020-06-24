@@ -14,6 +14,11 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+/***
+ * Encryption toolkit that holds both encryptor and decryptor Cipher
+ * @author Thito Yalasatria Sunarya
+ *
+ */
 public class EncryptionToolkit {
 
 	private Cipher encryptor;
@@ -27,6 +32,10 @@ public class EncryptionToolkit {
 		this.key = key;
 	}
 	
+	/***
+	 * The key instance
+	 * @return
+	 */
 	public Key getKey() {
 		return key;
 	}

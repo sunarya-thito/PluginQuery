@@ -8,6 +8,11 @@ import java.io.OutputStream;
 import java.io.UTFDataFormatException;
 import java.util.Arrays;
 
+/***
+ * DataBuffer for PluginQuery. Hold objects in byte buffer to send later or read later.
+ * @author Thito Yalasatria Sunarya
+ *
+ */
 public class DataBuffer implements DataInput, DataOutput {
 
 	private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;

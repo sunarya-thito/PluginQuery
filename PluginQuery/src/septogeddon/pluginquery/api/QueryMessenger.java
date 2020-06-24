@@ -6,6 +6,11 @@ import java.util.Collection;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 
+/***
+ * HUB for active connections
+ * @author Thito Yalasatria Sunarya
+ *
+ */
 public interface QueryMessenger {
 
 	/***

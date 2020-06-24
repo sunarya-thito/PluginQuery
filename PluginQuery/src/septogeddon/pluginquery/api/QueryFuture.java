@@ -2,6 +2,12 @@ package septogeddon.pluginquery.api;
 
 import java.util.function.Consumer;
 
+/***
+ * Future handling
+ * @author Thito Yalasatria Sunarya
+ *
+ * @param <T> Type returned in the future
+ */
 public interface QueryFuture<T> {
 
 	/***
@@ -41,13 +47,15 @@ public interface QueryFuture<T> {
 	/***
 	 * Consume the result when the task successfully executed
 	 * @param consumer
+	 * @return the same instance
 	 */
-	public default void thenAccept(Consumer<T> consumer) {
+	public default QueryFuture<T> thenAccept(Consumer<T> consumer) {
 		this.addListener(future->{
 			if (future.isSuccess()) {
 				consumer.accept(future.getResult());
 			}
 		});
+		return this;
 	}
 	/***
 	 * Remove future listener

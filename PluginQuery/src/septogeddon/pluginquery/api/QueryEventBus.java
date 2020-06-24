@@ -1,5 +1,10 @@
 package septogeddon.pluginquery.api;
 
+/***
+ * Handle and manage incoming events
+ * @author Thito Yalasatria Sunarya
+ *
+ */
 public interface QueryEventBus {
 
 	/***

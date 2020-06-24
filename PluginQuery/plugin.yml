@@ -1,6 +1,6 @@
 name: PluginQuery
 author: Septogeddon
-version: 1.0.30
+version: 1.0.32
 main: septogeddon.pluginquery.spigot.SpigotPluginQuery
 description: Allows you to send plugin message between servers
 commands:

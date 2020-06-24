@@ -14,7 +14,7 @@ import septogeddon.pluginquery.api.QueryConfiguration;
 import septogeddon.pluginquery.api.QueryConfigurationKey;
 import septogeddon.pluginquery.api.QueryContext;
 
-public class QueryConfigurationImpl implements QueryConfiguration {
+public class YamlQueryConfiguration implements QueryConfiguration {
 
 	public static final String HEADER = 
 			"#==========================================================\r\n" + 
@@ -29,11 +29,11 @@ public class QueryConfigurationImpl implements QueryConfiguration {
 	public static void saveDefaultConfig(File file) throws IOException {
 		if (file.getParentFile() != null) file.getParentFile().mkdirs();
 		if (!file.exists()) {
-			save(file, new QueryConfigurationImpl());
+			save(file, new YamlQueryConfiguration());
 		}
 	}
 	
-	public static void save(File file, QueryConfigurationImpl configuration) throws IOException {
+	public static void save(File file, YamlQueryConfiguration configuration) throws IOException {
 		Yaml yaml = new Yaml();
 		String dumped = yaml.dumpAsMap(configuration.map);
 		if (!dumped.endsWith("\n")) {
@@ -52,7 +52,7 @@ public class QueryConfigurationImpl implements QueryConfiguration {
 	
 	protected Map<String, Object> map = new LinkedHashMap<>();
 	
-	public QueryConfigurationImpl() {
+	public YamlQueryConfiguration() {
 		setOption(QueryContext.CONNECTION_THROTTLE, 1500);
 		setOption(QueryContext.RECONNECT_DELAY, 1500);
 		setOption(QueryContext.LOCK, false);
@@ -72,7 +72,7 @@ public class QueryConfigurationImpl implements QueryConfiguration {
 		Object set = key.set(value);
 		if (set != null) {
 			map.put(key.name(), value);
-		}
+		} else map.remove(key.name());
 	}
 
 	@SuppressWarnings("unchecked")
