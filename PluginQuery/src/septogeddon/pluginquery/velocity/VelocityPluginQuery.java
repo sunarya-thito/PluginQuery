@@ -55,8 +55,9 @@ public class VelocityPluginQuery implements QueryListener {
 	 */
 	public static final QueryMetadataKey<RegisteredServer> REGISTERED_SERVER = QueryMetadataKey.newCastableKey("velocityregisteredserver", RegisteredServer.class);
 	
-	private static final ChannelIdentifier LEGACY_IDENTIFIER = new LegacyChannelIdentifier(QueryContext.PLUGIN_MESSAGING_CHANNEL);
-	private static final ChannelIdentifier MODERN_IDENTIFIER = MinecraftChannelIdentifier.create(QueryContext.PLUGIN_MESSAGING_CHANNEL_NAMESPACE, QueryContext.PLUGIN_MESSAGING_CHANNEL_NAME);
+	@Deprecated
+	protected static final ChannelIdentifier LEGACY_IDENTIFIER = new LegacyChannelIdentifier(QueryContext.PLUGIN_MESSAGING_CHANNEL);
+	protected static final ChannelIdentifier MODERN_IDENTIFIER = MinecraftChannelIdentifier.create(QueryContext.PLUGIN_MESSAGING_CHANNEL_NAMESPACE, QueryContext.PLUGIN_MESSAGING_CHANNEL_NAME);
 	private static final QueryMetadataKey<Integer> RECONNECT_TRY_TIMES = QueryMetadataKey.newCastableKey("velocitypluginquery_retry_times", Integer.class);
 	
 	/***
@@ -87,7 +88,8 @@ public class VelocityPluginQuery implements QueryListener {
 		getLogger().info("Initializing PluginQuery...");
 		PluginQuery.initializeDefaultMessenger();
 		config = new PropertiesQueryConfiguration();
-		getServer().getCommandManager().register(new VelocityPluginQueryCommand(), "pluginquery", "velocitypluginquery", "pq", "vpq", "query");
+		getServer().getCommandManager().register(new VelocityPluginQueryCommand(this), "pluginquery", "velocitypluginquery", "pq", "vpq", "query");
+		reloadConfig();
 		initializeConnectors();
 	}
 	
@@ -108,12 +110,12 @@ public class VelocityPluginQuery implements QueryListener {
 				}
 			});
 		});
-		getServer().getChannelRegistrar().register(LEGACY_IDENTIFIER, MODERN_IDENTIFIER);
+		getServer().getChannelRegistrar().register(MODERN_IDENTIFIER);
 	}
 	
 	@Subscribe
 	public void pluginMessageEvent(PluginMessageEvent event) {
-		if (LEGACY_IDENTIFIER.equals(event.getIdentifier()) || MODERN_IDENTIFIER.equals(event.getIdentifier())) {
+		if (MODERN_IDENTIFIER.equals(event.getIdentifier())) {
 			DataBuffer buffer = new DataBuffer(event.getData());
 			String command = buffer.readUTF();
 			String prefix = QueryContext.COMMAND_PREFIX;
@@ -160,12 +162,14 @@ public class VelocityPluginQuery implements QueryListener {
 	public void reloadConfig() {
 		disabling = true;
 		QueryMessenger messenger = PluginQuery.getMessenger();
+		if (!getDataFolder().exists()) {
+			getDataFolder().mkdirs();
+		}
 		try {
 			File file = new File(dataFolder.toFile(), "config.properties");
-			if (!file.exists()) {
+			if (file.exists()) {
 				config.loadConfiguration(file);
 			} else {
-				file.getParentFile().mkdirs();
 				config.saveConfiguration(file);
 			}
 		} catch (Throwable t) {
