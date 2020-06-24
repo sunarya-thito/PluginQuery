@@ -187,7 +187,6 @@ public class PreparedQueryConnection implements QueryConnection {
 		this.channelFuture = future;
 		future.addListener((ChannelFuture f)->{
 			if (!f.isSuccess()) {
-				getMessenger().getPipeline().dispatchUncaughtException(this, f.cause());
 				long reconnectDelay = getMetadata().getData(QueryContext.METAKEY_RECONNECT_DELAY, -1L);
 				if (reconnectDelay >= 0) {
 					int maxTime = getMetadata().getData(QueryContext.METAKEY_MAX_RECONNECT_TRY, 0);

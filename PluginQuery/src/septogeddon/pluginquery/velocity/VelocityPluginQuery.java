@@ -16,12 +16,13 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.PluginMessageEvent;
-import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.messages.ChannelIdentifier;
 import com.velocitypowered.api.proxy.messages.ChannelMessageSink;
+import com.velocitypowered.api.proxy.messages.LegacyChannelIdentifier;
+import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.util.ProxyVersion;
 
@@ -47,14 +48,15 @@ import septogeddon.pluginquery.utils.DataBuffer;
 import septogeddon.pluginquery.utils.EncryptionToolkit;
 import septogeddon.pluginquery.velocity.event.QueryMessageEvent;
 
-@Plugin(id = "PluginQuery", name = "PluginQuery", authors = {"Septogeddon"}, version = "1.0.30", description = "Allows you to send plugin message between servers")
-public class VelocityPluginQuery implements QueryListener, ChannelIdentifier {
+public class VelocityPluginQuery implements QueryListener {
 
 	/***
 	 * Metadata Key for {@link com.velocitypowered.api.proxy.server.RegisteredServer}
 	 */
 	public static final QueryMetadataKey<RegisteredServer> REGISTERED_SERVER = QueryMetadataKey.newCastableKey("velocityregisteredserver", RegisteredServer.class);
 	
+	private static final ChannelIdentifier LEGACY_IDENTIFIER = new LegacyChannelIdentifier(QueryContext.PLUGIN_MESSAGING_CHANNEL);
+	private static final ChannelIdentifier MODERN_IDENTIFIER = MinecraftChannelIdentifier.create(QueryContext.PLUGIN_MESSAGING_CHANNEL_NAMESPACE, QueryContext.PLUGIN_MESSAGING_CHANNEL_NAME);
 	private static final QueryMetadataKey<Integer> RECONNECT_TRY_TIMES = QueryMetadataKey.newCastableKey("velocitypluginquery_retry_times", Integer.class);
 	
 	/***
@@ -86,6 +88,7 @@ public class VelocityPluginQuery implements QueryListener, ChannelIdentifier {
 		PluginQuery.initializeDefaultMessenger();
 		config = new PropertiesQueryConfiguration();
 		getServer().getCommandManager().register(new VelocityPluginQueryCommand(), "pluginquery", "velocitypluginquery", "pq", "vpq", "query");
+		initializeConnectors();
 	}
 	
 	public void initializeConnectors() {
@@ -101,16 +104,16 @@ public class VelocityPluginQuery implements QueryListener, ChannelIdentifier {
 				if (connection.isSuccess()) {
 					getLogger().info("Successfully connected to server \""+server.getServerInfo().getName()+"\"!");
 				} else {
-					getLogger().error("Failed to connect to server \""+server.getServerInfo().getName());
+					getLogger().error("Failed to connect to server \""+server.getServerInfo().getName()+"\"");
 				}
 			});
 		});
-		getServer().getChannelRegistrar().register(this);
+		getServer().getChannelRegistrar().register(LEGACY_IDENTIFIER, MODERN_IDENTIFIER);
 	}
 	
 	@Subscribe
 	public void pluginMessageEvent(PluginMessageEvent event) {
-		if (QueryContext.PLUGIN_MESSAGING_CHANNEL.equals(event.getIdentifier().getId())) {
+		if (LEGACY_IDENTIFIER.equals(event.getIdentifier()) || MODERN_IDENTIFIER.equals(event.getIdentifier())) {
 			DataBuffer buffer = new DataBuffer(event.getData());
 			String command = buffer.readUTF();
 			String prefix = QueryContext.COMMAND_PREFIX;
@@ -141,11 +144,6 @@ public class VelocityPluginQuery implements QueryListener, ChannelIdentifier {
 	public void sendMessage(Player player, String message) {
 		TextComponent component = VelocityPluginQueryCommand.legacy(message);
 		player.sendMessage(component);
-	}
-	
-	@Override
-	public String getId() {
-		return QueryContext.PLUGIN_MESSAGING_CHANNEL;
 	}
 	
 	public EncryptionToolkit getEncryption() {

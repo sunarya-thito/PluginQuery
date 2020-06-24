@@ -1,0 +1,10 @@
+{
+	"id":"pluginquery", 
+	"name":"PluginQuery",
+	"version": "1.0.32",
+	"description": "Allows you to send plugin message between servers",
+	"authors": [
+		"Septogeddon"
+	],
+	"main": "septogeddon.pluginquery.velocity.VelocityPluginQuery"
+}

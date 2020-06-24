@@ -30,8 +30,8 @@ public class PluginQuery {
 	 * Initialize PluginQuery with default {@link QueryMessenger}. Will not set if there is already an instance.
 	 */
 	public static void initializeDefaultMessenger() {
-		if (getMessenger() != null) return;
-		setMessenger(new QueryMessengerImpl());
+		if (messengerInstance != null) return;
+		messengerInstance = new QueryMessengerImpl();
 	}
 	
 }

@@ -18,7 +18,6 @@ public class QueryPushback extends ChannelInitializer<Channel> {
 				arg0.eventLoop().submit(()->messenger.injectConnection(arg0));
 			}
 		} catch (Throwable t) {
-			t.printStackTrace();
 		}
 	}
 	

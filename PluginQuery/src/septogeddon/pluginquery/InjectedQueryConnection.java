@@ -143,7 +143,6 @@ public class InjectedQueryConnection implements QueryConnection {
 					if (f.isSuccess()) {
 						future.complete(this);
 					} else {
-						f.cause().printStackTrace();
 						future.completeExceptionally(f.cause());
 					}
 				};

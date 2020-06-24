@@ -47,11 +47,19 @@ public interface QueryContext {
 	 * The Netty pipeline handler name for {@link septogeddon.pluginquery.netty.QueryReadTimeout}
 	 */
 	public static final String PIPELINE_TIMEOUT = "query_timeout";
-	
+
+	/***
+	 * The PluginMessaging channel namespace used by PluginQuery
+	 */
+	public static final String PLUGIN_MESSAGING_CHANNEL_NAMESPACE = "pluginquery";
+	/***
+	 * The PluginMessaging channel name used by PluginQuery
+	 */
+	public static final String PLUGIN_MESSAGING_CHANNEL_NAME = "query";
 	/***
 	 * The PluginMessaging channel used by PluginQuery
 	 */
-	public static final String PLUGIN_MESSAGING_CHANNEL = "pluginquery:query";
+	public static final String PLUGIN_MESSAGING_CHANNEL = PLUGIN_MESSAGING_CHANNEL_NAMESPACE + ":" + PLUGIN_MESSAGING_CHANNEL_NAME;
 	/***
 	 * The PluginMessaging sub-channel used by PluginQuery for key synchronizing
 	 */
