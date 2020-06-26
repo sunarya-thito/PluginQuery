@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
+import java.util.List;
 
 /***
  * Utilities that are useful for handling Queries
@@ -30,6 +32,20 @@ public class QueryUtil {
     private static String digits(long val, int digits) {
         long hi = 1L << (digits * 4);
         return Long.toHexString(hi | (val & (hi - 1))).substring(1);
+    }
+    
+    /***
+     * Get the first element of a Collection
+     * @param <T>
+     * @param collection
+     * @return First Element of collection
+     */
+    public static <T> T first(Collection<T> collection) {
+    	if (collection.isEmpty()) return null;
+    	if (collection instanceof List) {
+    		return ((List<T>) collection).get(0);
+    	}
+    	return collection.iterator().next();
     }
     
 	/***

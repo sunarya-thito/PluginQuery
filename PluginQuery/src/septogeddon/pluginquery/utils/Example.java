@@ -115,7 +115,7 @@ public class Example {
 	public class ExampleListener4 implements net.md_5.bungee.api.plugin.Listener {
 		
 		@net.md_5.bungee.event.EventHandler
-		public void event(QueryMessageEvent event) {
+		public void event(septogeddon.pluginquery.bungeecord.event.QueryMessageEvent event) {
 			// the channel
 			String channel = event.getTag();
 			// the message
@@ -127,4 +127,19 @@ public class Example {
 		}
 		
 	}
+	
+	public class ExampleListener5 implements org.bukkit.event.Listener {
+		
+		@org.bukkit.event.EventHandler
+		public void event(septogeddon.pluginquery.spigot.event.QueryMessageEvent event) {
+			// the channel
+			String channel = event.getChannel();
+			// the message
+			byte[] message = event.getMessage();
+			// the connection
+			QueryConnection connection = event.getConnection();
+		}
+		
+	}
+	
 }

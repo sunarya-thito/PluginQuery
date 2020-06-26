@@ -86,7 +86,6 @@ public class EncryptionToolkit {
 	 * Save this EncryptionToolkit to a file to load it later.
 	 * @param file
 	 * @throws IOException
-	 * @see {@link #encode()}
 	 */
 	public void writeKey(File file) throws IOException {
 		try (FileOutputStream output = new FileOutputStream(file)) {

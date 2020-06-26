@@ -10,14 +10,16 @@ public interface QueryListener {
 	/***
 	 * Called when {@link QueryConnection#isConnected()} value changed
 	 * @param connection
+	 * @throws Throwable any error that could possibly happen during the event listener execution
 	 */
-	public void onConnectionStateChange(QueryConnection connection);
+	public void onConnectionStateChange(QueryConnection connection) throws Throwable;
 	/***
 	 * Called when the connection received a query message
 	 * @param connection
 	 * @param channel
 	 * @param message
+	 * @throws Throwable any error that could possibly happen during the event listener execution
 	 */
-	public void onQueryReceived(QueryConnection connection, String channel, byte[] message);
+	public void onQueryReceived(QueryConnection connection, String channel, byte[] message) throws Throwable;
 	
 }
