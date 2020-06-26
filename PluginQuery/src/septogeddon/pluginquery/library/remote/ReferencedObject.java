@@ -1,19 +1,31 @@
 package septogeddon.pluginquery.library.remote;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class WeakReferencedObject {
+public class ReferencedObject implements Externalizable {
 
-	private AtomicLong lastCacheId = new AtomicLong();
-	private Map<Long, Method> cachedMethodLookup = new ConcurrentHashMap<>();
+	private long id;
+	private AtomicLong lastCacheId;
+	private Map<Long, Method> cachedMethodLookup;
 	private Object object;
 	
-	public WeakReferencedObject(Object object) {
+	public ReferencedObject(long id,Object object) {
 		this.object = object;
+		this.id = id;
+		cachedMethodLookup = new ConcurrentHashMap<>();
+		lastCacheId = new AtomicLong();
+	}
+	
+	public long getId() {
+		return id;
 	}
 	
 	public Map<Long, Method> getCachedMethodLookup() {
@@ -33,6 +45,16 @@ public class WeakReferencedObject {
 		long id = lastCacheId.getAndIncrement();
 		cachedMethodLookup.put(id, method);
 		return id;
+	}
+	
+	@Override
+	public void writeExternal(ObjectOutput out) throws IOException {
+		out.writeLong(id);
+	}
+
+	@Override
+	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+		id = in.readLong();
 	}
 	
 }

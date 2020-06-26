@@ -6,8 +6,9 @@ import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -37,7 +38,7 @@ public class RemoteObject<T> {
 	protected boolean queueQuery = true;
 	protected AtomicLong lastQueueId = new AtomicLong();
 	
-	protected Map<Long, WeakReferencedObject> referenced = new ConcurrentHashMap<>();
+	protected List<ReferencedObject> referenced = new ArrayList<>();
 	protected Map<Long, RemoteFuture> queuedInvocation = new ConcurrentHashMap<>();
 	
 	protected RemoteListener listener = new RemoteListener();
@@ -47,17 +48,18 @@ public class RemoteObject<T> {
 	public RemoteObject(String channel, QueryConnection connection, Class<T> clazz) {
 		this(channel, connection, null, clazz);
 	}
-	@SuppressWarnings("unchecked")
 	public RemoteObject(String channel, QueryConnection connection, T object) {
-		this(channel, connection, object, (Class<T>)object.getClass());
+		this(channel, connection, object, null);
 	}
 	public RemoteObject(String channel, QueryConnection connection, T object, Class<T> clazz) {
-		QueryUtil.illegalState(!clazz.isInterface(), "represented remote object class must be an interface");
 		this.channel = channel;
 		this.object = object;
 		this.connection = connection;
-		QueryUtil.illegalState(createReference(object) != 0, "unstatisfied owned object id");
-		crossoverObject = newObject(0, clazz);
+		QueryUtil.illegalState(createReference(object).getId() != 0, "unstatisfied owned object id");
+		if (clazz != null) {
+			QueryUtil.illegalState(!clazz.isInterface(), "represented remote object class must be an interface");
+			crossoverObject = newObject(0, clazz);
+		}
 		connection.getEventBus().registerListener(listener);
 	}
 	
@@ -148,13 +150,14 @@ public class RemoteObject<T> {
 		return null;
 	}
 	
-	protected long createReference(Object object) {
-		for (Entry<Long, WeakReferencedObject> reference : referenced.entrySet()) {
-			if (reference.getValue().getObject() == object) return reference.getKey();
+	protected ReferencedObject createReference(Object object) {
+		for (ReferencedObject reference : referenced) {
+			if (reference.getObject() == object) return reference;
 		}
 		long id = nextId();
-		referenced.put(id, new WeakReferencedObject(object));
-		return id;
+		ReferencedObject reference = new ReferencedObject(id, object);
+		referenced.add(reference);
+		return reference;
 	}
  	
 	protected Object[] filter(Object[] args) {
@@ -166,13 +169,19 @@ public class RemoteObject<T> {
 	
 	protected Object filter(Object target) { 
 		if (!(target instanceof Serializable) && !(target instanceof Externalizable) && target != null) {
-			return new CoveredObject(createReference(target));
+			return createReference(target);
 		}
 		return target;
 	}
 	
 	protected void closeReference(long id) {
-		referenced.remove(id);
+		for (int i = referenced.size()-1; i >= 0; i--) {
+			ReferencedObject reference = referenced.get(i);
+			if (reference.getId() == id) {
+				referenced.remove(i);
+				break;
+			}
+		}
 	}
 	
 	protected void closeCrossReference(long id) {
@@ -246,58 +255,62 @@ public class RemoteObject<T> {
 					Long methodId = buffer.pullObject();
 					String methodName = buffer.pullObject();
 					try {
-						WeakReferencedObject stored = referenced.get(objectId);
-						if (stored == null) {
-							throw new NullPointerException("no such object id "+objectId);
-						}
-						Object[] arguments = buffer.pullObject();
-						Method method;
-						if (methodId == null) {
-							String[] paramName = buffer.pullObject();
-							Class<?>[] parameters = new Class<?>[paramName.length];
-							for (int i = 0; i < parameters.length; i++) {
-								if (paramName[i] != null) {
-									try {
-										parameters[i] = Class.forName(paramName[i]);
-									} catch (ClassNotFoundException e) {
+						for (int index = referenced.size()-1; index >= 0; index--) {
+							ReferencedObject stored = referenced.get(index);
+							if (stored.getId() == objectId) {
+								Object[] arguments = buffer.pullObject();
+								Method method;
+								if (methodId == null) {
+									String[] paramName = buffer.pullObject();
+									Class<?>[] parameters = new Class<?>[paramName.length];
+									for (int i = 0; i < parameters.length; i++) {
+										if (paramName[i] != null) {
+											try {
+												parameters[i] = Class.forName(paramName[i]);
+											} catch (ClassNotFoundException e) {
+											}
+										}
 									}
+									method = findMethod(stored.getObject(), methodName, parameters, arguments);
+								} else {
+									method = stored.getCachedMethodLookup().get(methodId);
 								}
+								if (method != null) {
+									final Method finalMethod = method;
+									final ReferencedObject finalStored = stored;
+									submit(()->{
+										try {
+											Object result = finalMethod.invoke(finalStored.getObject(), arguments);
+											buffer.finalize();
+											buffer.pushObject(RemoteContext.COMMAND_RESPONSE_RESULT);
+											buffer.pushObject(queueId);
+											if (methodId == null) {
+												buffer.pushObject(finalStored.cacheMethod(finalMethod));
+											} else {
+												buffer.pushObject(methodId);
+											}
+											buffer.pushObject(result);
+											connection.sendQuery(channel, buffer.toByteArray(), isQueueQuery());
+										} catch (IllegalAccessException e) {
+										} catch (IllegalArgumentException | IOException e) {
+											e.printStackTrace();
+										} catch (InvocationTargetException e) {
+											buffer.finalize();
+											buffer.pushObject(RemoteContext.COMMAND_DELIVERED_EXCEPTION);
+											buffer.pushObject(queueId);
+											buffer.pushObject(e);
+											try {
+												connection.sendQuery(channel, buffer.toByteArray(), isQueueQuery());
+											} catch (IOException e1) {
+												e1.printStackTrace();
+											}
+										}
+									});
+								} else throw new NoSuchMethodException(methodName);
+								return;
 							}
-							method = findMethod(stored.getObject(), methodName, parameters, arguments);
-						} else {
-							method = stored.getCachedMethodLookup().get(methodId);
 						}
-						if (method != null) {
-							final Method finalMethod = method;
-							submit(()->{
-								try {
-									Object result = finalMethod.invoke(stored.getObject(), arguments);
-									buffer.finalize();
-									buffer.pushObject(RemoteContext.COMMAND_RETURN_METHOD);
-									buffer.pushObject(queueId);
-									if (methodId == null) {
-										buffer.pushObject(stored.cacheMethod(finalMethod));
-									} else {
-										buffer.pushObject(methodId);
-									}
-									buffer.pushObject(result);
-									connection.sendQuery(channel, buffer.toByteArray(), isQueueQuery());
-								} catch (IllegalAccessException e) {
-								} catch (IllegalArgumentException | IOException e) {
-									e.printStackTrace();
-								} catch (InvocationTargetException e) {
-									buffer.finalize();
-									buffer.pushObject(RemoteContext.COMMAND_DELIVERED_EXCEPTION);
-									buffer.pushObject(queueId);
-									buffer.pushObject(e);
-									try {
-										connection.sendQuery(channel, buffer.toByteArray(), isQueueQuery());
-									} catch (IOException e1) {
-										e1.printStackTrace();
-									}
-								}
-							});
-						} else throw new NoSuchMethodException(methodName);
+						throw new NullPointerException("no such object id "+objectId);
 					} catch (Throwable t) {
 						buffer.finalize();
 						buffer.pushObject(RemoteContext.COMMAND_DELIVERED_EXCEPTION);
@@ -312,19 +325,19 @@ public class RemoteObject<T> {
 					closeReference(objectId);
 					return;
 				}
-				if (command == RemoteContext.COMMAND_RETURN_METHOD) {
+				if (command == RemoteContext.COMMAND_RESPONSE_RESULT) {
 					long queueId = buffer.pullObject();
-					long methodId = buffer.pullObject();
+					long accessorId = buffer.pullObject();
 					RemoteFuture future = queuedInvocation.remove(queueId);
 					if (future == null) {
 						throw new IllegalStateException("no such future");
 					} else {
 						if (future instanceof RemoteMethodInvocationFuture) {
-							future.getHandler().getCachedMethodLookup().put(((RemoteMethodInvocationFuture) future).getMethod(), methodId);
+							future.getHandler().getCachedMethodLookup().put(((RemoteMethodInvocationFuture) future).getMethod(), accessorId);
 						}
 						Object object = buffer.pullObject();
-						if (object instanceof CoveredObject) {
-							CoveredObject covered = (CoveredObject)object;
+						if (object instanceof ReferencedObject) {
+							ReferencedObject covered = (ReferencedObject)object;
 							object = newObject(covered.getId(), future.getHint());
 						}
 						future.complete(object);
