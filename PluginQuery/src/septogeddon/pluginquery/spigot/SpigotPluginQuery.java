@@ -25,6 +25,7 @@ import septogeddon.pluginquery.api.QueryConnection;
 import septogeddon.pluginquery.api.QueryContext;
 import septogeddon.pluginquery.api.QueryMessageListener;
 import septogeddon.pluginquery.api.QueryMessenger;
+import septogeddon.pluginquery.api.QueryMetadataKey;
 import septogeddon.pluginquery.api.QueryPipeline;
 import septogeddon.pluginquery.channel.QueryDecryptor;
 import septogeddon.pluginquery.channel.QueryDeflater;
@@ -40,7 +41,11 @@ import septogeddon.pluginquery.utils.DataBuffer;
 import septogeddon.pluginquery.utils.EncryptionToolkit;
 
 public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListener, PluginMessageListener {
-	
+
+	/***
+	 * Metadata for {@link org.bukkit.Server} on {@link septogeddon.pluginquery.library.remote.RemoteObject}
+	 */
+	public static final QueryMetadataKey<SpigotRemoteObjectMessenger> REMOTEOBJECT_BUKKITSERVER = QueryMetadataKey.newCastableKey(QueryContext.REMOTEOBJECT_BUKKITSERVER_CHANNEL, SpigotRemoteObjectMessenger.class);
 	private Set<Channel> listeners = ConcurrentHashMap.newKeySet();
 	
 	private YamlQueryConfiguration config = new YamlQueryConfiguration();
@@ -48,6 +53,7 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
 	
 	public void onEnable() {
 		PluginQuery.initializeDefaultMessenger();
+		PluginQuery.getMessenger().getMetadata().setData(REMOTEOBJECT_BUKKITSERVER, new SpigotRemoteObjectMessenger(PluginQuery.getMessenger(), QueryContext.REMOTEOBJECT_BUKKITSERVER_CHANNEL, getServer()));
 		PluginQuery.getMessenger().getEventBus().registerListener(this);
 		getCommand("spigotpluginquery").setExecutor(new SpigotPluginQueryCommand(this));
 		getServer().getServicesManager()

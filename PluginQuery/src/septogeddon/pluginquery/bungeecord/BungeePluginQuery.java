@@ -45,6 +45,10 @@ public class BungeePluginQuery extends Plugin implements Listener, QueryListener
 	 * Metadata Key for {@link net.md_5.bungee.api.config.ServerInfo}
 	 */
 	public static final QueryMetadataKey<ServerInfo> SERVER_INFO = QueryMetadataKey.newCastableKey("bungeeserverinfo", ServerInfo.class);
+	/***
+	 * Metadata for {@link net.md_5.bungee.api.ProxyServer} on {@link septogeddon.pluginquery.library.remote.RemoteObject}
+	 */
+	public static final QueryMetadataKey<BungeeRemoteObjectMessenger> REMOTEOBJECT_PROXYSERVER = QueryMetadataKey.newCastableKey(QueryContext.REMOTEOBJECT_BUNGEESERVER_CHANNEL, BungeeRemoteObjectMessenger.class);
 	private static final QueryMetadataKey<Integer> RECONNECT_TRY_TIMES = QueryMetadataKey.newCastableKey("bungeepluginquery_retry_times", Integer.class);
 	
 	/***
@@ -69,6 +73,7 @@ public class BungeePluginQuery extends Plugin implements Listener, QueryListener
 		disabling = false;
 		getLogger().log(Level.INFO, "Initializing PluginQuery...");
 		PluginQuery.initializeDefaultMessenger();
+		PluginQuery.getMessenger().getMetadata().setData(REMOTEOBJECT_PROXYSERVER, new BungeeRemoteObjectMessenger(PluginQuery.getMessenger(), QueryContext.REMOTEOBJECT_BUNGEESERVER_CHANNEL, getProxy()));
 		reloadConfig();
 		PluginQuery.getMessenger().getEventBus().registerListener(this);
 		getProxy().getPluginManager().registerCommand(this, new BungeePluginQueryCommand(this));

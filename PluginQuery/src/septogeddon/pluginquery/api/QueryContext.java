@@ -142,4 +142,19 @@ public interface QueryContext {
 	 */
 	public static final QueryMetadataKey<Long> METAKEY_RECONNECT_DELAY = QueryMetadataKey.newCastableKey("reconnect-delay", Long.class);
 	
+	/***
+	 * Preserved channel for {@link org.bukkit.Server} on {@link septogeddon.pluginquery.library.remote.RemoteObject}
+	 */
+	public static final String REMOTEOBJECT_BUKKITSERVER_CHANNEL = "spigotpluginquery:remoteobject:bukkitserver";
+	
+	/***
+	 * Preserved channel for {@link net.md_5.bungee.api.ProxyServer} on {@link septogeddon.pluginquery.library.remote.RemoteObject}
+	 */
+	public static final String REMOTEOBJECT_BUNGEESERVER_CHANNEL = "spigotpluginquery:remoteobject:bungeeserver";
+	
+	/***
+	 * Preserved channel for {@link com.velocitypowered.api.proxy.ProxyServer} on {@link septogeddon.pluginquery.library.remote.RemoteObject}
+	 */
+	public static final String REMOTEOBJECT_VELOCITYSERVER_CHANNEL = "spigotpluginquery:remoteobject:velocityserver";
+	
 }

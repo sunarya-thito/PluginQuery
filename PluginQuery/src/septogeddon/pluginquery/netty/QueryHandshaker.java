@@ -50,6 +50,18 @@ public class QueryHandshaker extends ChannelInboundHandlerAdapter {
 								pipe.forEach(entry->pipe.remove(entry.getKey()));
 								// initialize query channel
 								PreparedQueryConnection.handshakenConnection(protocol, pipe);
+								if (buf.isReadable()) {
+									System.out.println("reading the rest "+buf.readableBytes());
+									buf.markReaderIndex();
+									byte[] rest = new byte[buf.readableBytes()];
+									buf.readBytes(rest);
+									System.out.println(new String(protocol.getMessenger().getPipeline().dispatchReceiving(protocol.getConnection(), rest)));
+									buf.resetReaderIndex();
+//									short s = buf.readShort();
+//									System.out.println("Read short: "+s);
+									ctx.fireChannelRead(buf);
+								} else buf.release();
+								return;
 							} else {
 								throw new IllegalArgumentException("invalid encryption");
 							}

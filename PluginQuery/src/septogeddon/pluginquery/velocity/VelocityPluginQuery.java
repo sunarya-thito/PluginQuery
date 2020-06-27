@@ -54,7 +54,10 @@ public class VelocityPluginQuery implements QueryListener {
 	 * Metadata Key for {@link com.velocitypowered.api.proxy.server.RegisteredServer}
 	 */
 	public static final QueryMetadataKey<RegisteredServer> REGISTERED_SERVER = QueryMetadataKey.newCastableKey("velocityregisteredserver", RegisteredServer.class);
-	
+	/***
+	 * Metadata for {@link com.velocitypowered.api.proxy.ProxyServer} on {@link septogeddon.pluginquery.library.remote.RemoteObject}
+	 */
+	public static final QueryMetadataKey<VelocityRemoteObjectMessenger> REMOTEOBJECT_PROXYSERVER = QueryMetadataKey.newCastableKey(QueryContext.REMOTEOBJECT_VELOCITYSERVER_CHANNEL, VelocityRemoteObjectMessenger.class);
 	@Deprecated
 	protected static final ChannelIdentifier LEGACY_IDENTIFIER = new LegacyChannelIdentifier(QueryContext.PLUGIN_MESSAGING_CHANNEL);
 	protected static final ChannelIdentifier MODERN_IDENTIFIER = MinecraftChannelIdentifier.create(QueryContext.PLUGIN_MESSAGING_CHANNEL_NAMESPACE, QueryContext.PLUGIN_MESSAGING_CHANNEL_NAME);
@@ -87,6 +90,7 @@ public class VelocityPluginQuery implements QueryListener {
 		this.dataFolder = folder;
 		getLogger().info("Initializing PluginQuery...");
 		PluginQuery.initializeDefaultMessenger();
+		PluginQuery.getMessenger().getMetadata().setData(REMOTEOBJECT_PROXYSERVER, new VelocityRemoteObjectMessenger(PluginQuery.getMessenger(), QueryContext.REMOTEOBJECT_VELOCITYSERVER_CHANNEL, server));
 		config = new PropertiesQueryConfiguration();
 		getServer().getCommandManager().register(new VelocityPluginQueryCommand(this), "pluginquery", "velocitypluginquery", "pq", "vpq", "query");
 		reloadConfig();

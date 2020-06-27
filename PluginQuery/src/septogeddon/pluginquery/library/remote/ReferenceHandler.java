@@ -4,6 +4,11 @@ import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/***
+ * The reference handler for {@link ObjectReference}
+ * @author Thito Yalasatria Sunarya
+ *
+ */
 public class ReferenceHandler {
 
 	private long id;
@@ -15,14 +20,26 @@ public class ReferenceHandler {
 		this.object = object;
 	}
 	
+	/***
+	 * Get cached method
+	 * @return map of cached method
+	 */
 	public Map<Method, Long> getCachedMethodLookup() {
 		return cachedMethodLookup;
 	}
 	
+	/***
+	 * Get the reference id
+	 * @return id
+	 */
 	public long getId() {
 		return id;
 	}
 	
+	/***
+	 * Get the owner
+	 * @return RemoteObject owner
+	 */
 	public RemoteObject<?> getOwner() {
 		return object;
 	}

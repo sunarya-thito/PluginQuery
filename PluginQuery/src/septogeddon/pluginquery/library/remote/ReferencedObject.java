@@ -10,18 +10,33 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
+/***
+ * Strong reference for both sender and receiver. Shareable between both.
+ * @author Thito Yalasatria Sunarya
+ *
+ */
 public class ReferencedObject implements Externalizable {
 
+	private static final long serialVersionUID = 1L;
 	private long id;
 	private AtomicLong lastCacheId;
 	private Map<Long, Method> cachedMethodLookup;
 	private Object object;
-	
+	private boolean receiverSide;
+	public ReferencedObject() {}
+	public ReferencedObject(long id, boolean receiverSide) {
+		this.id = id;
+		this.receiverSide = receiverSide;
+	}
 	public ReferencedObject(long id,Object object) {
 		this.object = object;
 		this.id = id;
 		cachedMethodLookup = new ConcurrentHashMap<>();
 		lastCacheId = new AtomicLong();
+	}
+	
+	public boolean isReceiverSide() {
+		return receiverSide;
 	}
 	
 	public long getId() {
@@ -50,11 +65,13 @@ public class ReferencedObject implements Externalizable {
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
 		out.writeLong(id);
+		out.writeBoolean(receiverSide);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		id = in.readLong();
+		receiverSide = in.readBoolean();
 	}
 	
 }

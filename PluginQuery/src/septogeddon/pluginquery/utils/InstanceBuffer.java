@@ -27,13 +27,18 @@ public class InstanceBuffer {
 		instances.addAll(collection);
 	}
 	
+	public int available() {
+		return instances.size();
+	}
+	
 	public InstanceBuffer(byte[] byteArray) throws ClassNotFoundException, IOException {
 		this(byteArray, ObjectInputStream::new);
 	}
 	
 	public InstanceBuffer(byte[] byteArray, IOFunction<InputStream, ObjectInput> inputFactory) throws ClassNotFoundException, IOException {
 		try (ObjectInput input = inputFactory.apply(new ByteArrayInputStream(byteArray))) {
-			while (input.available() > 0) {
+			int size = input.readInt();
+			for (int i = 0; i < size; i++) {
 				instances.add(input.readObject());
 			}
 		}
@@ -44,6 +49,13 @@ public class InstanceBuffer {
 		return (T)instances.remove(0);
 	}
 	
+	public void copyTo(InstanceBuffer buffer) {
+		for (int i = 0; i < instances.size(); i++) {
+			buffer.pushObject(instances.get(i));
+		}
+		instances.clear();
+	}
+	
 	public void pushObject(Object object) {
 		instances.add(object);
 	}
@@ -52,15 +64,20 @@ public class InstanceBuffer {
 		instances.clear();
 	}
 	
-	public byte[] toByteArray() throws IOException {
+	public synchronized byte[] toByteArray() throws IOException {
 		return toByteArray(ObjectOutputStream::new);
 	}
 	
-	public byte[] toByteArray(IOFunction<OutputStream, ObjectOutput> outputFactory) throws IOException {
+	public synchronized byte[] toByteArray(IOFunction<OutputStream, ObjectOutput> outputFactory) throws IOException {
 		ByteArrayOutputStream output = new ByteArrayOutputStream();
 		ObjectOutput out = outputFactory.apply(output);
+		out.writeInt(instances.size());
 		for (int i = 0; i < instances.size(); i++) {
-			out.writeObject(instances.get(i));
+			try {
+				out.writeObject(instances.get(i));
+			} catch (Throwable t) {
+				System.out.println("Failed to write object: "+i);
+			}
 		}
 		out.close();
 		return output.toByteArray();
