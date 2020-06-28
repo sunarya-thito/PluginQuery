@@ -22,17 +22,24 @@ public class ReferencedObject implements Externalizable {
 	private AtomicLong lastCacheId;
 	private Map<Long, Method> cachedMethodLookup;
 	private Object object;
+	private TypeHint hint;
 	private boolean receiverSide;
 	public ReferencedObject() {}
-	public ReferencedObject(long id, boolean receiverSide) {
+	public ReferencedObject(long id, TypeHint hint, boolean receiverSide) {
 		this.id = id;
+		this.hint = hint;
 		this.receiverSide = receiverSide;
 	}
-	public ReferencedObject(long id,Object object) {
+	public ReferencedObject(long id,Object object, TypeHint hint) {
 		this.object = object;
+		this.hint = hint;
 		this.id = id;
 		cachedMethodLookup = new ConcurrentHashMap<>();
 		lastCacheId = new AtomicLong();
+	}
+	
+	public TypeHint getHintType() {
+		return hint;
 	}
 	
 	public boolean isReceiverSide() {
@@ -65,12 +72,14 @@ public class ReferencedObject implements Externalizable {
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
 		out.writeLong(id);
+		out.writeObject(hint);
 		out.writeBoolean(receiverSide);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		id = in.readLong();
+		hint = (TypeHint)in.readObject();
 		receiverSide = in.readBoolean();
 	}
 	

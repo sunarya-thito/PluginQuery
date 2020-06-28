@@ -25,7 +25,7 @@ public class RemoteObjectProvider<T> {
 	private Map<QueryConnection, RemoteObject<T>> remoteObject = new ConcurrentHashMap<>();
 	private QueryMessenger messenger;
 	private RemoteListener listener = new RemoteListener();
-	private ClassRegistry registry = ClassRegistry.GLOBAL_REGISTRY;
+	private ClassRegistry registry = new ClassRegistry();
 
 	/***
 	 * Initialize RemoteObjectProvider for specified channel and messenger

@@ -26,12 +26,12 @@ public class ReferenceContext {
 	 * @param object the object instance
 	 * @return a referenced object
 	 */
-	public ReferencedObject createReference(Object object) {
+	public ReferencedObject createReference(TypeHint hint, Object object) {
 		for (ReferencedObject reference : referenced) {
 			if (reference.getObject() == object) return reference;
 		}
 		long id = lastId.getAndIncrement();
-		ReferencedObject reference = new ReferencedObject(id, object);
+		ReferencedObject reference = new ReferencedObject(id, object, hint);
 		referenced.add(reference);
 		return reference;
 	}

@@ -210,12 +210,12 @@ public class PreparedQueryConnection implements QueryConnection {
 	
 	public void flushQueue() {
 		if (getChannel() != null && !getChannel().eventLoop().inEventLoop()) {
-			getChannel().eventLoop().submit(()->{
+			getChannel().eventLoop().schedule(()->{
 				synchronized (queues) {
 					QueueQuery queue;
 					while ((queue = queues.poll()) != null) sendPrivately(queue);
 				}
-			});
+			}, 1, TimeUnit.MILLISECONDS);
 		} else {
 			synchronized (queues) {
 				QueueQuery queue;

@@ -2,11 +2,15 @@ package septogeddon.pluginquery.utils;
 
 import java.io.File;
 import java.net.InetSocketAddress;
+import java.util.List;
 
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Server;
+import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.PluginDescriptionFile;
+import org.bukkit.plugin.PluginManager;
 
 import septogeddon.pluginquery.PluginQuery;
 import septogeddon.pluginquery.api.QueryConnection;
@@ -18,6 +22,7 @@ import septogeddon.pluginquery.channel.QueryEncryptor;
 import septogeddon.pluginquery.channel.QueryInflater;
 import septogeddon.pluginquery.library.remote.ClassRegistry;
 import septogeddon.pluginquery.library.remote.RemoteObject;
+import septogeddon.pluginquery.library.remote.Substitute;
 //QueryConnection connection = messenger.newConnection(new InetSocketAddress("131.153.48.90", 25619));
 public class Debug {
 
@@ -33,16 +38,42 @@ public class Debug {
 				new QueryEncryptor(toolkit.getEncryptor())
 				);
 		connection.connect();
-		RemoteObject<Server> server = new RemoteObject<>(QueryContext.REMOTEOBJECT_BUKKITSERVER_CHANNEL, connection, Server.class, ClassRegistry.GLOBAL_REGISTRY);
-		Server serv = server.getObject();
+		
+		RemoteObject<BukkitServer> server = new RemoteObject<>(QueryContext.REMOTEOBJECT_BUKKITSERVER_CHANNEL, connection, BukkitServer.class, new ClassRegistry());
+		BukkitServer serv = server.getObject();
 		System.out.println("Connected to "+serv.getVersion());
 		serv.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&aHello &clmao &ethis &dtext &fsent &bfrom &1another &2client"));
 		for (OfflinePlayer pl : serv.getOfflinePlayers()) {
-			System.out.println(pl.getName()+":"+pl.getUniqueId());
+			System.out.println("Player: "+pl.getName()+" UUID:"+pl.getUniqueId());
 		}
-		for (Plugin plugin : serv.getPluginManager().getPlugins()) {
-			System.out.println(plugin.getName());
+		for (BukkitPlugin plugin : serv.getPluginManager().getPlugins()) {
+			System.out.println("Plugin: "+plugin.getName()+" Version: "+plugin.getDescription().getVersion()+" Authors: "+String.join(", ", plugin.getDescription().getAuthors()));
 		}
+	}
+	
+	@Substitute(Server.class)
+	public static interface BukkitServer {
+		public OfflinePlayer[] getOfflinePlayers();
+		public BukkitPluginManager getPluginManager(); 
+		public ConsoleCommandSender getConsoleSender();
+		public String getVersion();
+	}
+	
+	@Substitute(PluginManager.class)
+	public static interface BukkitPluginManager {
+		public BukkitPlugin[] getPlugins();
+	}
+	
+	@Substitute(Plugin.class)
+	public static interface BukkitPlugin {
+		public String getName();
+		public BukkitPluginDescription getDescription();
+	}
+	
+	@Substitute(PluginDescriptionFile.class)
+	public static interface BukkitPluginDescription {
+		public String getVersion();
+		public List<String> getAuthors();
 	}
 	
 }

@@ -58,10 +58,10 @@ public class InjectedQueryConnection implements QueryConnection {
 		getChannel().closeFuture().addListener((ChannelFuture f)->{
 			connectionDisconnected();
 		});
+		getChannel().pipeline().addFirst("query_handshaker",new QueryHandshaker(protocol));
 		getChannel().pipeline().addFirst(QueryContext.PIPELINE_TIMEOUT, new QueryReadTimeout(this, getMessenger().getMetadata().getData(QueryContext.METAKEY_READ_TIMEOUT, 1000L * 30), TimeUnit.MILLISECONDS));
-		getChannel().pipeline().addFirst("query_handshaker",
-				new QueryHandshaker(protocol)
-				);
+//		getChannel().pipeline().addLast("query_appender", new QueryAppender());
+//		getChannel().pipeline().addLast("query_splitter", new QuerySplitter());
 	}
 	
 	public void flushQueue() {
