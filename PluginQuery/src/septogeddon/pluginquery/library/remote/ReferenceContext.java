@@ -1,6 +1,7 @@
 package septogeddon.pluginquery.library.remote;
 
 import java.util.ArrayList;
+import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 /***
@@ -10,6 +11,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class ReferenceContext {
 
+	private WeakHashMap<Long, ObjectReference> references = new WeakHashMap<>();
 	private ArrayList<ReferencedObject> referenced = new ArrayList<>();
 	private AtomicLong lastId = new AtomicLong();
 	
@@ -17,8 +19,26 @@ public class ReferenceContext {
 	 * Clear all references
 	 */
 	public void clearReferences() {
+		references.clear();
 		referenced.clear();
 		lastId.set(0);
+	}
+	
+	/***
+	 * Get existing reference saved on this Remote side
+	 * @param id the id of reference object
+	 * @return the reference object
+	 */
+	public ObjectReference getExistingReference(long id) {
+		return references.get(id);
+	}
+	
+	/***
+	 * Put existing reference into this Remote side
+	 * @param reference the reference object
+	 */
+	public void putExistingReference(ObjectReference reference) {
+		references.put(reference.getReferenceHandler().getId(), reference);
 	}
 	
 	/***

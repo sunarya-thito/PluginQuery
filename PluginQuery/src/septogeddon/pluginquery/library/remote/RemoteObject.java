@@ -82,6 +82,7 @@ public class RemoteObject<T> {
 		this.object = object;
 		this.connection = connection;
 		QueryUtil.illegalState(clazz != null && !clazz.isInterface(), "represented remote object class must be an interface");
+		preventUnknownObject(clazz);
 		this.clazz = clazz;
 		connection.getEventBus().registerListener(listener);
 	}
@@ -277,6 +278,8 @@ public class RemoteObject<T> {
 			if (((ReferencedObject) target).isReceiverSide()) {
 				return context.getReferenced(((ReferencedObject) target).getId());
 			} else {
+				ObjectReference reference = getContext().getExistingReference(((ReferencedObject) target).getId());
+				if (reference != null) return reference;
 				return newObject(((ReferencedObject) target).getId(), ((ReferencedObject) target).getHintType().findAvailableRelatedClasses(getClassRegistry()));
 			}
 		}
@@ -341,10 +344,10 @@ public class RemoteObject<T> {
 	}
 	
 	@SuppressWarnings("all")
-	protected <K> K newObject(long id, List<Class<?>> clazz) {
+	protected <K extends ObjectReference> K newObject(long id, List<Class<?>> clazz) {
 		clazz.add(ObjectReference.class);
 		final ReferenceHandler loader = new ReferenceHandler(id, this);
-		return (K)
+		K generated = (K)
 				Proxy.newProxyInstance(
 						getClass().getClassLoader(), 
 						clazz.toArray(new Class[0]), 
@@ -400,6 +403,8 @@ public class RemoteObject<T> {
 						throw t;
 					}
 				});
+		getContext().putExistingReference(generated);
+		return generated;
 	}
 	
 	class RemoteObjectOutputStream extends ObjectOutputStream {
@@ -458,6 +463,7 @@ public class RemoteObject<T> {
 			}
 		}
 
+		@SuppressWarnings("unchecked")
 		@Override
 		public void onQueryReceived(QueryConnection connection, String channel, byte[] message) throws ClassNotFoundException, IOException {
 			if (RemoteObject.this.channel.equals(channel)) {
@@ -581,9 +587,14 @@ public class RemoteObject<T> {
 				if (command == RemoteContext.COMMAND_PONG && hashCode == RemoteObject.this.hashCode()) {
 					long queueId = buffer.pullObject();
 					long objectId = buffer.pullObject();
-					List<Class<?>> classes = new ArrayList<>();
-					classes.add(clazz);
-					crossoverObject = newObject(objectId, classes);
+					ObjectReference reference = getContext().getExistingReference(objectId);
+					if (reference != null) {
+						crossoverObject = (T)reference;
+					} else {
+						List<Class<?>> classes = new ArrayList<>();
+						classes.add(clazz);
+						crossoverObject = newObject(objectId, classes);
+					}
 					RemoteFuture future = queuedInvocation.remove(queueId);
 					if (future != null) future.complete(null);
 					else throw new IllegalStateException("no such future");
