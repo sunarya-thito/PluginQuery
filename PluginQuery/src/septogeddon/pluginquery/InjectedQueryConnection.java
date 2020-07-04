@@ -17,6 +17,7 @@ import septogeddon.pluginquery.api.QueryMetadata;
 import septogeddon.pluginquery.netty.QueryHandshaker;
 import septogeddon.pluginquery.netty.QueryProtocol;
 import septogeddon.pluginquery.netty.QueryReadTimeout;
+import septogeddon.pluginquery.utils.Debug;
 import septogeddon.pluginquery.utils.QueryUtil;
 
 public class InjectedQueryConnection implements QueryConnection {
@@ -42,6 +43,7 @@ public class InjectedQueryConnection implements QueryConnection {
 	}
 	
 	protected void connectionDisconnected() {
+		Debug.debug(()->"Connection: END");
 		getMessenger().getPipeline().dispatchInactive(this);
 		getEventBus().dispatchConnectionState(this);
 		protocol.clear();
@@ -49,19 +51,19 @@ public class InjectedQueryConnection implements QueryConnection {
 	}
 	
 	protected void connectionConnected() {
+		Debug.debug(()->"Connection: DONE");
 		getMessenger().getPipeline().dispatchActive(this);
 		getEventBus().dispatchConnectionState(this);
 		flushQueue();
 	}
 	
 	protected void prepareChannel() {
+		Debug.debug(()->"Connection: PREPARE");
 		getChannel().closeFuture().addListener((ChannelFuture f)->{
 			connectionDisconnected();
 		});
 		getChannel().pipeline().addFirst("query_handshaker",new QueryHandshaker(protocol));
 		getChannel().pipeline().addFirst(QueryContext.PIPELINE_TIMEOUT, new QueryReadTimeout(this, getMessenger().getMetadata().getData(QueryContext.METAKEY_READ_TIMEOUT, 1000L * 30), TimeUnit.MILLISECONDS));
-//		getChannel().pipeline().addLast("query_appender", new QueryAppender());
-//		getChannel().pipeline().addLast("query_splitter", new QuerySplitter());
 	}
 	
 	public void flushQueue() {
@@ -114,6 +116,7 @@ public class InjectedQueryConnection implements QueryConnection {
 	public QueryFuture<QueryConnection> disconnect() {
 		if (getChannel() != null) {
 			if (getChannel().isOpen()) {
+				Debug.debug(()->"Disconnect: ATTEMPT");
 				getChannel().disconnect();
 			}
 		}

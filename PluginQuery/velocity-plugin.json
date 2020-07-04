@@ -1,7 +1,7 @@
 {
 	"id":"pluginquery", 
 	"name":"PluginQuery",
-	"version": "1.0.35",
+	"version": "1.0.36",
 	"description": "Allows you to send plugin message between servers",
 	"authors": [
 		"Septogeddon"

@@ -14,6 +14,7 @@ import septogeddon.pluginquery.PluginQuery;
 import septogeddon.pluginquery.api.QueryConnection;
 import septogeddon.pluginquery.api.QueryContext;
 import septogeddon.pluginquery.utils.DataBuffer;
+import septogeddon.pluginquery.utils.Debug;
 import septogeddon.pluginquery.utils.EncryptionToolkit;
 
 public class VelocityPluginQueryCommand implements Command {
@@ -59,8 +60,13 @@ public class VelocityPluginQueryCommand implements Command {
 				sender.sendMessage(legacy(QueryContext.COMMAND_PREFIX+"Servers (&e"+str.size()+"&7)&8: &7"+String.join(", ", str)));
 				return;
 			}
+			if (args[0].equalsIgnoreCase("debug")) {
+				Debug.STATE_DEBUG = !Debug.STATE_DEBUG;
+				sender.sendMessage(legacy(QueryContext.COMMAND_PREFIX+"Debug mode has been "+(Debug.STATE_DEBUG ? "enabled" : "disabled")));
+				return;
+			}
 		}
-		sender.sendMessage(legacy(QueryContext.COMMAND_PREFIX+"PluginQuery v"+plugin.getServer().getPluginManager().getPlugin("pluginquery").get().getDescription().getVersion().get()+" by Septogeddon. Usage: &f/pq <sync|reload|check>"));
+		sender.sendMessage(legacy(QueryContext.COMMAND_PREFIX+"PluginQuery v"+plugin.getServer().getPluginManager().getPlugin("pluginquery").get().getDescription().getVersion().get()+" by Septogeddon. Usage: &f/pq <sync|reload|check|debug>"));
 	}
 	
 	public static TextComponent legacy(String s) {

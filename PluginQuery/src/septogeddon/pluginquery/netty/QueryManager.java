@@ -3,6 +3,7 @@ package septogeddon.pluginquery.netty;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import septogeddon.pluginquery.QueryMessage;
+import septogeddon.pluginquery.utils.Debug;
 
 public class QueryManager extends SimpleChannelInboundHandler<QueryMessage> {
 
@@ -13,6 +14,7 @@ public class QueryManager extends SimpleChannelInboundHandler<QueryMessage> {
 	
 	@Override
 	protected void channelRead0(ChannelHandlerContext arg0, QueryMessage arg1) throws Exception {
+		Debug.debug(()->"Manager: RECEIVED: "+arg1.getChannel());
 		protocol.getConnection().getEventBus().dispatchMessage(protocol.getConnection(), arg1.getChannel(), arg1.getMessage());
 	}
 	

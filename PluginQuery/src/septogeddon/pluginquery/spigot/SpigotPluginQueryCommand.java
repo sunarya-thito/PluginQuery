@@ -11,6 +11,7 @@ import io.netty.channel.Channel;
 import septogeddon.pluginquery.PluginQuery;
 import septogeddon.pluginquery.api.QueryConnection;
 import septogeddon.pluginquery.api.QueryContext;
+import septogeddon.pluginquery.utils.Debug;
 
 public class SpigotPluginQueryCommand implements CommandExecutor {
 
@@ -40,8 +41,13 @@ public class SpigotPluginQueryCommand implements CommandExecutor {
 				send(sender, prefix+"Listeners (&e"+l.size()+"&7)&8: &7"+String.join(", ", l));
 				return true;
 			}
+			if (args[0].equalsIgnoreCase("debug")) {
+				Debug.STATE_DEBUG = !Debug.STATE_DEBUG;
+				send(sender, prefix+(Debug.STATE_DEBUG ? "Debug mode has been enabled" : "Debug mode has been disabled"));
+				return true;
+			}
 		}
-		send(sender, prefix+"PluginQuery v"+plugin.getDescription().getVersion()+" by Septogeddon. Usage: &b/"+label+" <reload|check>");
+		send(sender, prefix+"PluginQuery v"+plugin.getDescription().getVersion()+" by Septogeddon. Usage: &b/"+label+" <reload|check|debug>");
 		return true;
 	}
 	

@@ -10,6 +10,7 @@ import septogeddon.pluginquery.PluginQuery;
 import septogeddon.pluginquery.api.QueryConnection;
 import septogeddon.pluginquery.api.QueryContext;
 import septogeddon.pluginquery.utils.DataBuffer;
+import septogeddon.pluginquery.utils.Debug;
 import septogeddon.pluginquery.utils.EncryptionToolkit;
 
 public class BungeePluginQueryCommand extends Command {
@@ -53,8 +54,17 @@ public class BungeePluginQueryCommand extends Command {
 				plugin.sendMessage(sender, prefix+"Servers (&e"+str.size()+"&7)&8: &7"+String.join(", ", str));
 				return;
 			}
+			if (args[0].equalsIgnoreCase("debug")) {
+				Debug.STATE_DEBUG = !Debug.STATE_DEBUG;
+				if (Debug.STATE_DEBUG) {
+					plugin.sendMessage(sender, prefix+"Debug mode has been enabled");
+				} else {
+					plugin.sendMessage(sender, prefix+"Debug mode has been disabled");
+				}
+				return;
+			}
 		}
-		plugin.sendMessage(sender, prefix+"PluginQuery v"+plugin.getDescription().getVersion()+" by Septogeddon. Usage: &f/pq <sync|reload|check>");
+		plugin.sendMessage(sender, prefix+"PluginQuery v"+plugin.getDescription().getVersion()+" by Septogeddon. Usage: &f/pq <sync|reload|check|debug>");
 	}
 	
 }

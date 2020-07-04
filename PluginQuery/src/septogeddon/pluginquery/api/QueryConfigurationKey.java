@@ -81,7 +81,7 @@ public interface QueryConfigurationKey<T> {
 					}
 				} else if (from instanceof String) {
 					// Comma-Separated-Value
-					list.addAll(Arrays.asList(((String)from).split(",")));
+					if (!((String) from).isEmpty()) list.addAll(Arrays.asList(((String)from).split(",")));
 				}
 				return list;
 			}

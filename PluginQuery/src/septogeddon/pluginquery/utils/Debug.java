@@ -3,6 +3,7 @@ package septogeddon.pluginquery.utils;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.List;
+import java.util.function.Supplier;
 
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
@@ -26,10 +27,14 @@ import septogeddon.pluginquery.library.remote.Substitute;
 //QueryConnection connection = messenger.newConnection(new InetSocketAddress("131.153.48.90", 25619));
 public class Debug {
 
+	public static boolean STATE_DEBUG = false;
+	public static void debug(Supplier<String> msg) {
+		if (STATE_DEBUG) System.out.println("[PluginQueryDebug] "+msg.get());
+	}
 	public static void main(String[]args) throws Throwable {
 		PluginQuery.initializeDefaultMessenger();
 		QueryMessenger messenger = PluginQuery.getMessenger();
-		QueryConnection connection = messenger.newConnection(new InetSocketAddress("localhost", 25565));
+		QueryConnection connection = messenger.newConnection(new InetSocketAddress("131.153.48.90", 25619));
 		EncryptionToolkit toolkit = new EncryptionToolkit(EncryptionToolkit.readKey(new File("D:\\TestServer\\plugins\\PluginQuery\\secret.key")));
 		messenger.getPipeline().addLast(
 				new QueryDecryptor(toolkit.getDecryptor()),

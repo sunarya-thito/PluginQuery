@@ -8,6 +8,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelPipeline;
 import septogeddon.pluginquery.PreparedQueryConnection;
 import septogeddon.pluginquery.api.QueryContext;
+import septogeddon.pluginquery.utils.Debug;
 import septogeddon.pluginquery.utils.QueryUtil;
 
 public class QueryHandshaker extends ChannelInboundHandlerAdapter {
@@ -30,6 +31,7 @@ public class QueryHandshaker extends ChannelInboundHandlerAdapter {
 					byte[] bytes = new byte[length];
 					buf.readBytes(bytes);
 					if (new String(bytes).equals(QueryContext.PACKET_HANDSHAKE)) {
+						Debug.debug(()->"Handshaker: BEGIN: "+ctx.channel().remoteAddress());
 						// read UUID
 						long most = buf.readLong();
 						long least = buf.readLong();
@@ -40,10 +42,12 @@ public class QueryHandshaker extends ChannelInboundHandlerAdapter {
 						buf.readBytes(bytes);
 						try {
 							// decrypt UUID
+							Debug.debug(()->"Handshaker: CHECK TOKEN");
 							bytes = protocol.getMessenger().getPipeline().dispatchReceiving(protocol.getConnection(), bytes);
 							QueryUtil.nonNull(bytes, "unique handshake token");
 							// match the decrypted UUID with the UUID
 							if (new String(bytes).equals(uuid)) {
+								Debug.debug(()->"Handshaker: CHANGE PROTOCOL");
 								// remove minecraft packet handlers and this handler
 								// in this process, read timeout also removed
 								// we don't use read timeout, keep it open as long as possible
@@ -55,14 +59,12 @@ public class QueryHandshaker extends ChannelInboundHandlerAdapter {
 								throw new IllegalArgumentException("invalid encryption");
 							}
 						} catch (Throwable t) {
+							Debug.debug(()->"Handshaker: ERROR: "+t);
 							protocol.getConnection().disconnect();
 						}
 						buf.release();
 						return;
 					} 
-				} else {
-					byte[] toAll = new byte[buf.readableBytes()];
-					buf.readBytes(toAll);
 				}
 			} catch (Throwable t) {
 			}
