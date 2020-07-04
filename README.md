@@ -19,3 +19,11 @@ Allows spigot/bungeecord/velocity plugins to send plugin message without having 
 1. Open PluginQuery data folder inside your proxy plugins folder
 2. Copy secret.key
 3. Paste it inside PluginQuery data folder inside your server plugins folder
+
+## Useful Links
+Wiki
+https://sunaryayalasatriathito.gitbook.io/pluginquery/
+Java Doc
+https://thito.xyz/PluginQueryJavaDoc/
+Discord Support
+https://discord.gg/SHhUK4E
