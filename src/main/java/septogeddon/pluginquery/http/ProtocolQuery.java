@@ -8,6 +8,9 @@ import java.util.stream.Collectors;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.mapping;
 
+/**
+ * The HTTP URL Query
+ */
 public class ProtocolQuery {
 
     private Map<String, List<String>> queryValues;
@@ -16,6 +19,11 @@ public class ProtocolQuery {
         queryValues = splitQuery(query);
     }
 
+    /**
+     * Get value of a (form) data
+     * @param key the key
+     * @return the value
+     */
     public String getValue(String key) {
         List<String> values = queryValues.get(key);
         if (values != null && !values.isEmpty()) {
@@ -24,6 +32,11 @@ public class ProtocolQuery {
         return null;
     }
 
+    /**
+     * Get values of (form) data
+     * @param key the key
+     * @return the value
+     */
     public List<String> getValues(String key) {
         return new ArrayList<>(queryValues.get(key));
     }

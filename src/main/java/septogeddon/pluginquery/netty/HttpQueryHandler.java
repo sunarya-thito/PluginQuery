@@ -32,27 +32,31 @@ public class HttpQueryHandler extends ChannelInboundHandlerAdapter {
                 if (splitHeadLine.length == 3) {
                     String method = splitHeadLine[0];
                     ProtocolMethod protocolMethod = HTTPContext.getContext().getMethod(method);
-                    if (protocolMethod != null) {
-                        String path = splitHeadLine[1];
-                        ProtocolPath protocolPath = new ProtocolPath(path.isEmpty() ? path : path.substring(1));
-                        Map<String, String> headers = new LinkedHashMap<>();
-                        String line;
-                        while (!(line = readLine(byteBuf)).isEmpty()) {
-                            String splitLine[] = line.split(": ", 2);
-                            if (splitLine.length == 2) {
-                                // header key must be lowercase in general
-                                headers.put(splitLine[0].toLowerCase(), splitLine[1]);
+                    if (protocolMethod != null && protocolMethod.getContext() != null) {
+                        HTTPContext context = protocolMethod.getContext();
+                        if (context != null) {
+                            String path = splitHeadLine[1];
+                            ProtocolPath protocolPath = new ProtocolPath(path.isEmpty() ? path : path.substring(1));
+                            Map<String, HTTPHeader> headers = new LinkedHashMap<>();
+                            String line;
+                            while (!(line = readLine(byteBuf)).isEmpty()) {
+                                String splitLine[] = line.split(": ", 2);
+                                if (splitLine.length == 2) {
+                                    // header key must be lowercase in general
+                                    String name = splitLine[0].toLowerCase();
+                                    headers.put(name, HTTPHandler.parseHeader(name, splitLine[1]));
+                                }
                             }
+                            ProtocolRequest request = new ProtocolRequest(context, protocolMethod, protocolPath, splitHeadLine[2], headers, byteBuf);
+                            ProtocolClient client = new ProtocolClient(request.getVersion(), context, ctx);
+                            try {
+                                context.dispatchRequest(request, client);
+                            } catch (Throwable t) {
+                                t.printStackTrace();
+                            }
+                            client.close();
+                            ctx.disconnect();
                         }
-                        ProtocolRequest request = new ProtocolRequest(protocolMethod, protocolPath, splitHeadLine[2], headers, byteBuf);
-                        ProtocolClient client = new ProtocolClient(request.getVersion(), ctx);
-                        try {
-                            HTTPContext.getContext().dispatchRequest(request, client);
-                        } catch (Throwable t) {
-                            t.printStackTrace();
-                        }
-                        client.close();
-                        ctx.disconnect();
                         return;
                     }
                 }
