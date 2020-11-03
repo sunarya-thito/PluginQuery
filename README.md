@@ -23,5 +23,5 @@ Allows spigot/bungeecord/velocity plugins to send plugin message without having 
 
 ## Useful Links
 * [Wiki](https://sunaryayalasatriathito.gitbook.io/pluginquery/)
-* [Java Doc](https://thito.xyz/PluginQueryJavaDoc/)
+* [Java Doc](https://kuda-kudaan.github.io/PluginQueryJavaDoc/)
 * [Discord Support](https://discord.gg/SHhUK4E)
