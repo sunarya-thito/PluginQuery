@@ -38,7 +38,7 @@ public class InjectedQueryConnection implements QueryConnection {
     }
 
     protected void connectionDisconnected() {
-        Debug.debug(() -> "Connection: END");
+        Debug.debug("Connection: END");
         getMessenger().getPipeline().dispatchInactive(this);
         getEventBus().dispatchConnectionState(this);
         protocol.clear();
@@ -46,14 +46,14 @@ public class InjectedQueryConnection implements QueryConnection {
     }
 
     protected void connectionConnected() {
-        Debug.debug(() -> "Connection: DONE");
+        Debug.debug("Connection: DONE");
         getMessenger().getPipeline().dispatchActive(this);
         getEventBus().dispatchConnectionState(this);
         flushQueue();
     }
 
     protected void prepareChannel() {
-        Debug.debug(() -> "Connection: PREPARE");
+        Debug.debug("Connection: PREPARE");
         getChannel().closeFuture().addListener((ChannelFuture f) -> {
             connectionDisconnected();
         });
@@ -111,7 +111,7 @@ public class InjectedQueryConnection implements QueryConnection {
     public QueryFuture<QueryConnection> disconnect() {
         if (getChannel() != null) {
             if (getChannel().isOpen()) {
-                Debug.debug(() -> "Disconnect: ATTEMPT");
+                Debug.debug("Disconnect: ATTEMPT");
                 getChannel().disconnect();
             }
         }

@@ -24,13 +24,16 @@ import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.function.Supplier;
 
-//QueryConnection connection = messenger.newConnection(new InetSocketAddress("131.153.48.90", 25619));
 public class Debug {
 
     public static boolean STATE_DEBUG = false;
 
-    public static void debug(Supplier<String> msg) {
-        if (STATE_DEBUG) System.out.println("[PluginQueryDebug] " + msg.get());
+    /**
+     * Print a message to console for debugging purpose
+     * @param msg the message
+     */
+    public static void debug(String msg) {
+        if (STATE_DEBUG) System.out.println("[PluginQueryDebug] " + msg);
     }
 
 }

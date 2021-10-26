@@ -97,7 +97,7 @@ public class PreparedQueryConnection implements QueryConnection {
     }
 
     protected void connectionDisconnected() {
-        Debug.debug(() -> "Connection: END");
+        Debug.debug("Connection: END");
         getMessenger().getPipeline().dispatchInactive(this);
         getEventBus().dispatchConnectionState(this);
         queues.clear();
@@ -123,7 +123,7 @@ public class PreparedQueryConnection implements QueryConnection {
         ChannelFuture fut = getChannel().writeAndFlush(buf);
         fut.addListener((ChannelFuture f) -> {
             if (f.isSuccess()) {
-                Debug.debug(() -> "Connection: SUCCESS");
+                Debug.debug("Connection: SUCCESS");
                 prepareChannel();
                 future.complete(this);
                 return;
@@ -133,7 +133,7 @@ public class PreparedQueryConnection implements QueryConnection {
                 cause = new IllegalStateException("connection closed");
             }
             if (cause != null) {
-                Debug.debug(() -> "Connection: CLOSE: " + f.cause());
+                Debug.debug("Connection: CLOSE: " + f.cause());
                 long reconnectDelay = getMetadata().getData(QueryContext.METAKEY_RECONNECT_DELAY, -1L);
                 if (reconnectDelay >= 0) {
                     int maxTime = getMetadata().getData(QueryContext.METAKEY_MAX_RECONNECT_TRY, 0);
@@ -174,7 +174,7 @@ public class PreparedQueryConnection implements QueryConnection {
         this.channelFuture = future;
         future.addListener((ChannelFuture f) -> {
             if (!f.isSuccess()) {
-                Debug.debug(() -> "Connection: FAILED: " + f.cause() + " (" + f.channel().remoteAddress() + ")");
+                Debug.debug("Connection: FAILED: " + f.cause() + " (" + f.channel().remoteAddress() + ")");
                 long reconnectDelay = getMetadata().getData(QueryContext.METAKEY_RECONNECT_DELAY, -1L);
                 if (reconnectDelay >= 0) {
                     int maxTime = getMetadata().getData(QueryContext.METAKEY_MAX_RECONNECT_TRY, 0);
@@ -189,7 +189,7 @@ public class PreparedQueryConnection implements QueryConnection {
                     fut.completeExceptionally(f.cause());
                 }
             } else {
-                Debug.debug(() -> "Connection: DONE");
+                Debug.debug("Connection: DONE");
                 handshake(fut, currentTime);
             }
         });
@@ -217,7 +217,7 @@ public class PreparedQueryConnection implements QueryConnection {
         Channel c = getChannel();
         if (c != null) {
             if (c.isOpen()) {
-                Debug.debug(() -> "Disconnect: ATTEMPT");
+                Debug.debug("Disconnect: ATTEMPT");
                 c.disconnect();
             }
             return new QueryChannelFuture<>(c.closeFuture(), this);

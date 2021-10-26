@@ -108,13 +108,13 @@ public class BungeePluginQuery extends Plugin implements Listener, QueryListener
                     sendMessage(e.getReceiver(), prefix + "&eYou don't have permission \"&b" + QueryContext.ADMIN_PERMISSION + "&e\" in your spigot server.");
                     break;
                 case QueryContext.RESPONSE_ERROR:
-                    sendMessage(e.getReceiver(), prefix + "&cAn error occured: &f" + buffer.readUTF());
+                    sendMessage(e.getReceiver(), prefix + "&cAn error occurred: &f" + buffer.readUTF());
                     break;
                 case QueryContext.RESPONSE_LOCKED:
                     sendMessage(e.getReceiver(), prefix + "&cCannot synchronize locked server");
                     break;
                 case QueryContext.RESPONSE_SUCCESS:
-                    sendMessage(e.getReceiver(), prefix + "&aSuccessfully binded your spigot server with your bungeecord server!");
+                    sendMessage(e.getReceiver(), prefix + "&aSuccessfully bound your spigot server with your bungeecord server!");
                     break;
                 default:
                     sendMessage(e.getReceiver(), prefix + "&eUnknown response: " + command);

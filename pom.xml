@@ -18,20 +18,44 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.2.0</version>
-                <configuration>
-                    <outputDirectory>C:/server/plugins</outputDirectory>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.8</version>
+                <executions>
+                    <execution>
+                        <id>copy</id>
+                        <phase>package</phase>
+                        <configuration>
+                            <target>
+                                <copy file="${project.build.directory}/${project.build.finalName}.jar"
+                                      todir="D:/Servers/1.8/plugins"/>
+                                <copy file="${project.build.directory}/${project.build.finalName}.jar"
+                                      todir="D:/Servers/1.13.2/plugins"/>
+                                <copy file="${project.build.directory}/${project.build.finalName}.jar"
+                                      todir="D:/Servers/1.17/plugins"/>
+                                <copy file="${project.build.directory}/${project.build.finalName}.jar"
+                                      todir="D:/Servers/Purpur 1.17/plugins"/>
+                                <copy file="${project.build.directory}/${project.build.finalName}.jar"
+                                      todir="D:/Servers/1.16/plugins"/>
+                                <copy file="${project.build.directory}/${project.build.finalName}.jar"
+                                      todir="D:/Servers/BungeeCord/plugins"/>
+                                <copy file="${project.build.directory}/${project.build.finalName}.jar"
+                                      todir="D:/Servers/Velocity/plugins"/>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
@@ -59,20 +83,20 @@
         <dependency>
             <groupId>com.velocitypowered</groupId>
             <artifactId>velocity-api</artifactId>
-            <version>1.1.0-SNAPSHOT</version>
+            <version>3.0.1</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>net.md-5</groupId>
             <artifactId>bungeecord-proxy</artifactId>
-            <version>1.16-R0.4-SNAPSHOT</version>
+            <version>1.17-R0.1-SNAPSHOT</version>
             <type>jar</type>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>net.md-5</groupId>
             <artifactId>bungeecord-api</artifactId>
-            <version>1.16-R0.4-SNAPSHOT</version>
+            <version>1.17-R0.1-SNAPSHOT</version>
             <type>jar</type>
             <scope>provided</scope>
         </dependency>

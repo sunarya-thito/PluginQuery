@@ -158,7 +158,7 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
             if (QueryContext.COMMAND_VERSION_CHECK.equals(command)) {
                 String bungeeCordVersion = buffer.readUTF();
                 String configuredServerName = buffer.readUTF();
-                getLogger().log(Level.INFO, "BungeeCord version: " + bungeeCordVersion + " (" + connection.getAddress() + ")");
+                getLogger().log(Level.INFO, "Proxy version: " + bungeeCordVersion + " (" + connection.getAddress() + ")");
                 getLogger().log(Level.INFO, "Configured server name: " + configuredServerName);
                 buffer.clear();
                 buffer.writeUTF(QueryContext.COMMAND_VERSION_CHECK);

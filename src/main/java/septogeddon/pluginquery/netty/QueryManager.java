@@ -15,7 +15,7 @@ public class QueryManager extends SimpleChannelInboundHandler<QueryMessage> {
 
     @Override
     protected void channelRead0(ChannelHandlerContext arg0, QueryMessage arg1) throws Exception {
-        Debug.debug(() -> "Manager: RECEIVED: " + arg1.getChannel());
+        Debug.debug("Manager: RECEIVED: " + arg1.getChannel());
         protocol.getConnection().getEventBus().dispatchMessage(protocol.getConnection(), arg1.getChannel(), arg1.getMessage());
     }
 

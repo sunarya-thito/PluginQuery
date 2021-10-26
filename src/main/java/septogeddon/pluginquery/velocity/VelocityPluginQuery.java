@@ -3,6 +3,7 @@ package septogeddon.pluginquery.velocity;
 import com.google.inject.Inject;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.PluginMessageEvent;
+import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
@@ -12,7 +13,7 @@ import com.velocitypowered.api.proxy.messages.LegacyChannelIdentifier;
 import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.util.ProxyVersion;
-import net.kyori.text.TextComponent;
+import net.kyori.adventure.text.TextComponent;
 import org.slf4j.Logger;
 import septogeddon.pluginquery.PluginQuery;
 import septogeddon.pluginquery.PropertiesQueryConfiguration;
@@ -62,7 +63,7 @@ public class VelocityPluginQuery implements QueryListener {
         PluginQuery.initializeDefaultMessenger();
         PluginQuery.getMessenger().getMetadata().setData(REMOTEOBJECT_PROXYSERVER, new VelocityRemoteObjectMessenger(PluginQuery.getMessenger(), QueryContext.REMOTEOBJECT_VELOCITYSERVER_CHANNEL, server));
         config = new PropertiesQueryConfiguration();
-        getServer().getCommandManager().register(new VelocityPluginQueryCommand(this), "pluginquery", "velocitypluginquery", "pq", "vpq", "query");
+        getServer().getCommandManager().register("pluginquery", new VelocityPluginQueryCommand(this), "velocitypluginquery", "pq", "vpq", "query");
         reloadConfig();
         initializeConnectors();
     }
@@ -115,13 +116,13 @@ public class VelocityPluginQuery implements QueryListener {
                         sendMessage(player, prefix + "&eYou don't have permission \"&b" + QueryContext.ADMIN_PERMISSION + "&e\" in your spigot server.");
                         break;
                     case QueryContext.RESPONSE_ERROR:
-                        sendMessage(player, prefix + "&cAn error occured: &f" + buffer.readUTF());
+                        sendMessage(player, prefix + "&cAn error occurred: &f" + buffer.readUTF());
                         break;
                     case QueryContext.RESPONSE_LOCKED:
                         sendMessage(player, prefix + "&cCannot synchronize locked server");
                         break;
                     case QueryContext.RESPONSE_SUCCESS:
-                        sendMessage(player, prefix + "&aSuccessfully binded your spigot server with your bungeecord server!");
+                        sendMessage(player, prefix + "&aSuccessfully bound your spigot server with your velocity server!");
                         break;
                     default:
                         sendMessage(player, prefix + "&eUnknown response: " + command);
@@ -129,6 +130,11 @@ public class VelocityPluginQuery implements QueryListener {
                 }
             }
         }
+    }
+
+    @Subscribe
+    public void shutdown(ProxyShutdownEvent e) {
+        shutdownConnectors();
     }
 
     public void sendMessage(Player player, String message) {
