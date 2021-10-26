@@ -5,8 +5,18 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>septogeddon.pluginquery</groupId>
-    <artifactId>PluginQuery</artifactId>
+    <artifactId>pluginquery</artifactId>
     <version>1.0.42</version>
+
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>Github sunarya-thito Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/sunarya-thito/PluginQuery</url>
+            <uniqueVersion>false</uniqueVersion>
+        </repository>
+    </distributionManagement>
+
     <build>
         <finalName>PluginQuery</finalName>
         <resources>
