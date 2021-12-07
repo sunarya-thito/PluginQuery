@@ -25,7 +25,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 public class BungeePluginQuery extends Plugin implements Listener, QueryListener {
@@ -68,30 +67,21 @@ public class BungeePluginQuery extends Plugin implements Listener, QueryListener
         getProxy().getPluginManager().registerCommand(this, new BungeePluginQueryCommand(this));
         getProxy().getPluginManager().registerListener(this, this);
         getProxy().registerChannel(QueryContext.PLUGIN_MESSAGING_CHANNEL);
-        synchronized (this) {
-            getProxy().getServers().values().forEach(server -> {
-                if (!connecting.add(server)) return;
-                getLogger().log(Level.INFO, "Connecting to server \"" + server.getName() + "\"...");
-                QueryConnection conn = PluginQuery.getMessenger().newConnection(server.getSocketAddress());
-                prepareConnection(server, conn);
+        getProxy().getServers().values().forEach(server -> {
+            getLogger().log(Level.INFO, "Connecting to server \"" + server.getName() + "\"...");
+            QueryConnection conn = PluginQuery.getMessenger().newConnection(server.getSocketAddress());
+            conn.getMetadata().setData(SERVER_INFO, server);
+            QueryFuture<QueryConnection> future = conn.connect();
+            future.addListener(check -> {
+                if (check.isSuccess()) {
+                    getLogger().log(Level.INFO, "Successfully connected to server \"" + server.getName() + "\"!");
+                } else {
+                    getLogger().log(Level.SEVERE, "Failed to connect to server \"" + server.getName() + "\"");
+                }
             });
-        }
-    }
-
-    private Set<ServerInfo> connecting = new HashSet<>();
-    private void prepareConnection(ServerInfo server, QueryConnection conn) {
-        conn.getMetadata().setData(SERVER_INFO, server);
-        QueryFuture<QueryConnection> future = conn.connect();
-        conn.getEventBus().registerListener(this);
-        future.addListener(check -> {
-            if (check.isSuccess()) {
-                getLogger().log(Level.INFO, "Successfully connected to server \"" + server.getName() + "\"!");
-            } else {
-                getLogger().log(Level.SEVERE, "Failed to connect to server \"" + server.getName() + "\"");
-            }
-            connecting.remove(server);
         });
     }
+
 
     @Override
     public void onDisable() {

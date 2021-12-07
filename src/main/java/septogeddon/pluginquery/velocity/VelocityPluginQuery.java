@@ -68,6 +68,7 @@ public class VelocityPluginQuery implements QueryListener {
         PluginQuery.getMessenger().getMetadata().setData(REMOTEOBJECT_PROXYSERVER, new VelocityRemoteObjectMessenger(PluginQuery.getMessenger(), QueryContext.REMOTEOBJECT_VELOCITYSERVER_CHANNEL, server));
         config = new PropertiesQueryConfiguration();
         getServer().getCommandManager().register("pluginquery", new VelocityPluginQueryCommand(this), "velocitypluginquery", "pq", "vpq", "query");
+        PluginQuery.getMessenger().getEventBus().registerListener(this);
         reloadConfig();
         initializeConnectors();
     }
@@ -91,7 +92,6 @@ public class VelocityPluginQuery implements QueryListener {
             QueryConnection conn = messenger.newConnection(address);
             conn.getMetadata().setData(REGISTERED_SERVER, server);
             QueryFuture<QueryConnection> future = conn.connect();
-            conn.getEventBus().registerListener(this);
             future.addListener(connection -> {
                 if (connection.isSuccess()) {
                     getLogger().info("Successfully connected to server \"" + server.getServerInfo().getName() + "\"!");
