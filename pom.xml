@@ -6,7 +6,7 @@
 
     <groupId>septogeddon.pluginquery</groupId>
     <artifactId>pluginquery</artifactId>
-    <version>1.0.42</version>
+    <version>1.0.43</version>
 
     <distributionManagement>
         <repository>
