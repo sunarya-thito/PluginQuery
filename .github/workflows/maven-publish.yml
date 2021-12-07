@@ -4,6 +4,9 @@
 name: Maven Package
 
 on:
+  push:
+  - main
+  workflow_dispatch:
   release:
     types: [created]
 
