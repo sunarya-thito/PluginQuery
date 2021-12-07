@@ -4,6 +4,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import septogeddon.pluginquery.api.*;
+import septogeddon.pluginquery.message.QueryGetActiveConnections;
 import septogeddon.pluginquery.netty.QueryHandshaker;
 import septogeddon.pluginquery.netty.QueryProtocol;
 import septogeddon.pluginquery.netty.QueryReadTimeout;
@@ -13,6 +14,7 @@ import septogeddon.pluginquery.utils.QueryUtil;
 import java.net.SocketAddress;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class InjectedQueryConnection implements QueryConnection {
@@ -24,6 +26,7 @@ public class InjectedQueryConnection implements QueryConnection {
     private final Channel channel;
     private boolean handshaken;
     private final QueryProtocol protocol;
+    private LinkedList<Consumer<Set<QueryConnection>>> activeConnectionsFetcher;
 
     public InjectedQueryConnection(QueryMessenger messenger, Channel channel) {
         this.messenger = messenger;
@@ -37,11 +40,34 @@ public class InjectedQueryConnection implements QueryConnection {
         prepareChannel();
     }
 
+    public void consumeQueryConnections(List<SocketAddress> addresses) {
+        if (activeConnectionsFetcher != null) {
+            Set<QueryConnection> dispatcherSet = new HashSet<>();
+            for (SocketAddress address : addresses) {
+                dispatcherSet.add(new DispatcherQueryConnection(address, this));
+            }
+            Consumer<Set<QueryConnection>> listener;
+            LinkedList<Consumer<Set<QueryConnection>>> activeConnectionsFetcher = this.activeConnectionsFetcher;
+            while ((listener = activeConnectionsFetcher.poll()) != null) {
+                listener.accept(dispatcherSet);
+            }
+        }
+    }
+
     @Override
     public QueryFuture<Set<QueryConnection>> fetchActiveConnections() {
-        QueryCompletableFuture<Set<QueryConnection>> listQueryCompletableFuture = new QueryCompletableFuture<>();
-        listQueryCompletableFuture.complete(new HashSet<>(messenger.getActiveConnections()));
-        return listQueryCompletableFuture;
+        QueryCompletableFuture<Set<QueryConnection>> queryCompletableFuture = new QueryCompletableFuture<>();
+        synchronized (this) {
+            if (activeConnectionsFetcher == null) {
+                activeConnectionsFetcher = new LinkedList<>();
+                activeConnectionsFetcher.add(result -> {
+                    activeConnectionsFetcher = null;
+                });
+            }
+        }
+        activeConnectionsFetcher.add(queryCompletableFuture::complete);
+        sendQuery(QueryContext.REDIRECT_MESSAGING_CHANNEL, new QueryGetActiveConnections().toByteArraySafe());
+        return queryCompletableFuture;
     }
 
     protected void connectionDisconnected() {

@@ -12,11 +12,11 @@ import java.util.Set;
 public class DispatcherQueryConnection implements QueryConnection {
 
     private SocketAddress address;
-    private PreparedQueryConnection delegated;
+    private InjectedQueryConnection delegated;
     private QueryEventBus queryEventBus = new QueryEventBusImpl();
     private QueryMetadata queryMetadata = new QueryMetadataImpl();
 
-    public DispatcherQueryConnection(SocketAddress address, PreparedQueryConnection delegated) {
+    public DispatcherQueryConnection(SocketAddress address, InjectedQueryConnection delegated) {
         this.address = address;
         this.delegated = delegated;
     }
@@ -53,12 +53,12 @@ public class DispatcherQueryConnection implements QueryConnection {
 
     @Override
     public QueryFuture<QueryConnection> connect() {
-        return delegated.sendQuery(QueryContext.PLUGIN_MESSAGING_CHANNEL, new QueryDispatchConnect(address).toByteArraySafe());
+        return delegated.sendQuery(QueryContext.REDIRECT_MESSAGING_CHANNEL, new QueryDispatchConnect(address).toByteArraySafe());
     }
 
     @Override
     public QueryFuture<QueryConnection> disconnect() {
-        return delegated.sendQuery(QueryContext.PLUGIN_MESSAGING_CHANNEL, new QueryDispatchDisconnect(address).toByteArraySafe());
+        return delegated.sendQuery(QueryContext.REDIRECT_MESSAGING_CHANNEL, new QueryDispatchDisconnect(address).toByteArraySafe());
     }
 
     @Override
@@ -73,11 +73,11 @@ public class DispatcherQueryConnection implements QueryConnection {
 
     @Override
     public QueryFuture<QueryConnection> sendQuery(String channel, byte[] message) {
-        return delegated.sendQuery(QueryContext.PLUGIN_MESSAGING_CHANNEL, new QueryDispatchSendQuery(address, channel, message, true).toByteArraySafe(), true);
+        return delegated.sendQuery(QueryContext.REDIRECT_MESSAGING_CHANNEL, new QueryDispatchSendQuery(address, channel, message, true).toByteArraySafe(), true);
     }
 
     @Override
     public QueryFuture<QueryConnection> sendQuery(String channel, byte[] message, boolean queue) {
-        return delegated.sendQuery(QueryContext.PLUGIN_MESSAGING_CHANNEL, new QueryDispatchSendQuery(address, channel, message, queue).toByteArraySafe(), queue);
+        return delegated.sendQuery(QueryContext.REDIRECT_MESSAGING_CHANNEL, new QueryDispatchSendQuery(address, channel, message, queue).toByteArraySafe(), queue);
     }
 }

@@ -3,6 +3,7 @@ package septogeddon.pluginquery.utils;
 import java.io.*;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
 
@@ -10,13 +11,14 @@ public class ObjectBuffer extends DataBuffer implements ObjectInput, ObjectOutpu
 
     final static public int NULL_TYPE = 0, INTEGER_TYPE = 1, LONG_TYPE = 2, DOUBLE_TYPE = 3, FLOAT_TYPE = 4,
             SHORT_TYPE = 5, CHAR_TYPE = 6, BYTE_TYPE = 7, BOOLEAN_TYPE = 8, ARRAY_TYPE = 9, OBJECT_TYPE = 10;
-    private static sun.misc.Unsafe unsafe;
+    private static Object unsafe;
 
     static {
         try {
-            Field field = sun.misc.Unsafe.class.getDeclaredField("theUnsafe");
+            Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
+            Field field = unsafeClass.getDeclaredField("theUnsafe");
             field.setAccessible(true);
-            unsafe = (sun.misc.Unsafe) field.get(null);
+            unsafe = field.get(null);
         } catch (Throwable t) {
             t.printStackTrace();
         }
@@ -80,6 +82,8 @@ public class ObjectBuffer extends DataBuffer implements ObjectInput, ObjectOutpu
         return (T) readObject();
     }
 
+
+    private Method allocateInstance;
     public Object readObject() {
         int type = readByte();
         if (type == NULL_TYPE)
@@ -122,7 +126,10 @@ public class ObjectBuffer extends DataBuffer implements ObjectInput, ObjectOutpu
             String className = readBytes();
             try {
                 Class<?> cl = Class.forName(className);
-                Object object = unsafe.allocateInstance(cl);
+                if (allocateInstance == null) {
+                    allocateInstance = Class.forName("sun.misc.Unsafe").getDeclaredMethod("allocateInstance", Class.class);
+                }
+                Object object = allocateInstance.invoke(unsafe, cl);
                 hashToObject.put(hash, object);
                 if (object instanceof Externalizable) {
                     ((Externalizable) object).readExternal(this);

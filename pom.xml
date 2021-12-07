@@ -59,6 +59,10 @@
                                       todir="D:/Servers/BungeeCord/plugins"/>
                                 <copy file="${project.build.directory}/${project.build.finalName}.jar"
                                       todir="D:/Servers/Velocity/plugins"/>
+                                <copy file="${project.build.directory}/${project.build.finalName}.jar"
+                                      todir="D:/Servers/Airplane 1.17/plugins"/>
+                                <copy file="${project.build.directory}/${project.build.finalName}.jar"
+                                      todir="D:/Servers/Airplane 1.17 - Copy/plugins"/>
                             </target>
                         </configuration>
                         <goals>

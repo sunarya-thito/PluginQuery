@@ -3,6 +3,7 @@ package septogeddon.pluginquery.spigot;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -11,6 +12,8 @@ import septogeddon.pluginquery.PluginQuery;
 import septogeddon.pluginquery.YamlQueryConfiguration;
 import septogeddon.pluginquery.api.*;
 import septogeddon.pluginquery.channel.*;
+import septogeddon.pluginquery.message.QueryBroadcastMessage;
+import septogeddon.pluginquery.message.QueryObject;
 import septogeddon.pluginquery.netty.QueryInterceptor;
 import septogeddon.pluginquery.netty.QueryPushback;
 import septogeddon.pluginquery.spigot.event.QueryMessageEvent;
@@ -153,6 +156,11 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
     @Override
     public void onQueryReceived(QueryConnection connection, String channel, byte[] message) {
         if (QueryContext.PLUGIN_MESSAGING_CHANNEL.equals(channel)) {
+            QueryObject queryObject = QueryObject.fromByteArraySafe(message);
+            if (queryObject instanceof QueryBroadcastMessage) {
+                Bukkit.broadcastMessage(ChatColor.translateAlternateColorCodes('&', ((QueryBroadcastMessage) queryObject).getMessage()));
+                return;
+            }
             DataBuffer buffer = new DataBuffer(message);
             String command = buffer.readUTF();
             if (QueryContext.COMMAND_VERSION_CHECK.equals(command)) {

@@ -14,20 +14,20 @@ public abstract class QueryFutureAdapter<T> implements QueryFuture<T> {
     protected boolean done;
     private final Set<Consumer<QueryFuture<T>>> listeners = ConcurrentHashMap.newKeySet();
 
-    public void complete(T result) {
+    public synchronized void complete(T result) {
         this.result = result;
         done = true;
         fireEvent();
         listeners.clear();
     }
 
-    public void fireEvent() {
+    public synchronized void fireEvent() {
         for (Consumer<QueryFuture<T>> listener : listeners) {
             listener.accept(this);
         }
     }
 
-    public void completeExceptionally(Throwable cause) {
+    public synchronized void completeExceptionally(Throwable cause) {
         this.cause = cause;
         done = true;
         fireEvent();
@@ -35,27 +35,27 @@ public abstract class QueryFutureAdapter<T> implements QueryFuture<T> {
     }
 
     @Override
-    public boolean isDone() {
+    public synchronized boolean isDone() {
         return done;
     }
 
     @Override
-    public boolean isSuccess() {
+    public synchronized boolean isSuccess() {
         return cause == null;
     }
 
     @Override
-    public Throwable getCause() {
+    public synchronized Throwable getCause() {
         return cause;
     }
 
     @Override
-    public T getResult() {
+    public synchronized T getResult() {
         return result;
     }
 
     @Override
-    public void addListener(Consumer<QueryFuture<T>> listener) {
+    public synchronized void addListener(Consumer<QueryFuture<T>> listener) {
         QueryUtil.nonNull(listener, "listener");
         if (done) {
             listener.accept(this);
@@ -65,7 +65,7 @@ public abstract class QueryFutureAdapter<T> implements QueryFuture<T> {
     }
 
     @Override
-    public void removeListener(Consumer<QueryFuture<T>> listener) {
+    public synchronized void removeListener(Consumer<QueryFuture<T>> listener) {
         QueryUtil.nonNull(listener, "listener");
         listeners.remove(listener);
     }

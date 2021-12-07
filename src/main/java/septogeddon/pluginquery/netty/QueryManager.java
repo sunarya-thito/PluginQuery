@@ -2,6 +2,7 @@ package septogeddon.pluginquery.netty;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import septogeddon.pluginquery.InjectedQueryConnection;
 import septogeddon.pluginquery.PreparedQueryConnection;
 import septogeddon.pluginquery.QueryMessage;
 import septogeddon.pluginquery.api.QueryConnection;
@@ -22,12 +23,13 @@ public class QueryManager extends SimpleChannelInboundHandler<QueryMessage> {
     @Override
     protected void channelRead0(ChannelHandlerContext arg0, QueryMessage arg1) throws Exception {
         Debug.debug("Manager: RECEIVED: " + arg1.getChannel());
-        if (arg1.getChannel().equals(QueryContext.PLUGIN_MESSAGING_CHANNEL)) {
+        if (arg1.getChannel().equals(QueryContext.REDIRECT_MESSAGING_CHANNEL)) {
             QueryObject queryObject = QueryObject.fromByteArraySafe(arg1.getMessage());
+            Debug.debug("Received redirect message: "+queryObject);
             if (queryObject instanceof QueryGetActiveConnections) {
                 protocol.getConnection().sendQuery(arg1.getChannel(), new QuerySendActiveConnections(protocol.getMessenger().getActiveConnections().stream().map(QueryConnection::getAddress).collect(Collectors.toList())).toByteArraySafe());
-            } else if (queryObject instanceof QuerySendActiveConnections && protocol.getConnection() instanceof PreparedQueryConnection) {
-                ((PreparedQueryConnection) protocol.getConnection()).consumeQueryConnections(((QuerySendActiveConnections) queryObject).getAddresses());
+            } else if (queryObject instanceof QuerySendActiveConnections && protocol.getConnection() instanceof InjectedQueryConnection) {
+                ((InjectedQueryConnection) protocol.getConnection()).consumeQueryConnections(((QuerySendActiveConnections) queryObject).getAddresses());
             } else if (queryObject instanceof QueryDispatchDisconnect) {
                 protocol.getMessenger().getActiveConnections().stream().filter(connection -> connection.getAddress().equals(((QueryDispatchDisconnect) queryObject).getAddress()))
                         .findAny().ifPresent(QueryConnection::disconnect);

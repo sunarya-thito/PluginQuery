@@ -8,6 +8,7 @@ import org.bukkit.command.CommandSender;
 import septogeddon.pluginquery.PluginQuery;
 import septogeddon.pluginquery.api.QueryConnection;
 import septogeddon.pluginquery.api.QueryContext;
+import septogeddon.pluginquery.message.QueryBroadcastMessage;
 import septogeddon.pluginquery.utils.Debug;
 
 import java.util.ArrayList;
@@ -47,8 +48,32 @@ public class SpigotPluginQueryCommand implements CommandExecutor {
                 send(sender, prefix + (Debug.STATE_DEBUG ? "Debug mode has been enabled" : "Debug mode has been disabled"));
                 return true;
             }
+            if (args[0].equalsIgnoreCase("broadcastMessage")) {
+                if (args.length > 1) {
+                    String msg = args[1];
+                    for (int i = 2; i < args.length; i++) msg += " " + args[i];
+                    for (QueryConnection con : PluginQuery.getMessenger().getActiveConnections()) {
+                        String finalMsg = msg;
+                        con.fetchActiveConnections().thenAccept(result -> {
+                            if (result.isEmpty()) {
+                                send(sender, prefix + "There is no active connections available.");
+                                return;
+                            }
+                            for (QueryConnection connection : result) {
+                                send(sender, prefix + "Sending message to "+connection.getAddress());
+                                connection.sendQuery(QueryContext.PLUGIN_MESSAGING_CHANNEL, new QueryBroadcastMessage(finalMsg).toByteArraySafe()).thenAccept(result2 -> {
+                                    send(sender, prefix + "Message sent to "+result2.getAddress());
+                                });
+                            }
+                        });
+                    }
+                    return true;
+                }
+                send(sender, prefix + "Broadcast a message to all active connections. Usage: /"+label+" broadcastMessage <message>");
+                return true;
+            }
         }
-        send(sender, prefix + "PluginQuery v" + plugin.getDescription().getVersion() + " by Septogeddon. Usage: &b/" + label + " <reload|check|debug>");
+        send(sender, prefix + "PluginQuery v" + plugin.getDescription().getVersion() + " by Septogeddon. Usage: &b/" + label + " <reload|check|debug|broadcastMessage>");
         return true;
     }
 

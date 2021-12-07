@@ -24,7 +24,6 @@ public class PreparedQueryConnection implements QueryConnection {
     private final QueryProtocol protocol;
     private final CloseListener closeFuture = new CloseListener();
     private boolean handshaken;
-    private LinkedList<Consumer<Set<QueryConnection>>> activeConnectionsFetcher;
 
     public PreparedQueryConnection(QueryMessenger messenger, SocketAddress address) {
         this.messenger = messenger;
@@ -41,17 +40,9 @@ public class PreparedQueryConnection implements QueryConnection {
 
     @Override
     public QueryFuture<Set<QueryConnection>> fetchActiveConnections() {
-        QueryCompletableFuture<Set<QueryConnection>> queryCompletableFuture = new QueryCompletableFuture<>();
-        synchronized (this) {
-            if (activeConnectionsFetcher == null) {
-                activeConnectionsFetcher = new LinkedList<>();
-                activeConnectionsFetcher.add(result -> {
-                    activeConnectionsFetcher = null;
-                });
-            }
-            activeConnectionsFetcher.add(queryCompletableFuture::complete);
-        }
-        return queryCompletableFuture;
+        QueryCompletableFuture<Set<QueryConnection>> listQueryCompletableFuture = new QueryCompletableFuture<>();
+        listQueryCompletableFuture.complete(new HashSet<>(messenger.getActiveConnections()));
+        return listQueryCompletableFuture;
     }
 
     public static void handshakenConnection(QueryProtocol protocol, ChannelPipeline pipeline) {
@@ -109,21 +100,6 @@ public class PreparedQueryConnection implements QueryConnection {
 
     protected void prepareChannel() {
         handshakenConnection(protocol, channelFuture.channel().pipeline());
-    }
-
-    public void consumeQueryConnections(List<SocketAddress> addresses) {
-        synchronized (this) {
-            if (activeConnectionsFetcher != null) {
-                Set<QueryConnection> dispatcherSet = new HashSet<>();
-                for (SocketAddress address : addresses) {
-                    dispatcherSet.add(new DispatcherQueryConnection(address, this));
-                }
-                Consumer<Set<QueryConnection>> listener;
-                while ((listener = activeConnectionsFetcher.poll()) != null) {
-                    listener.accept(dispatcherSet);
-                }
-            }
-        }
     }
 
     protected void connectionDisconnected() {

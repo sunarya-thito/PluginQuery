@@ -59,6 +59,10 @@ public interface QueryContext {
     /**
      * The PluginMessaging channel used by PluginQuery
      */
+    String REDIRECT_MESSAGING_CHANNEL = PLUGIN_MESSAGING_CHANNEL_NAMESPACE+":redirect";
+    /**
+     * The PluginMessaging channel used by PluginQuery
+     */
     String PLUGIN_MESSAGING_CHANNEL = PLUGIN_MESSAGING_CHANNEL_NAMESPACE + ":" + PLUGIN_MESSAGING_CHANNEL_NAME;
     /**
      * The PluginMessaging sub-channel used by PluginQuery for key synchronizing

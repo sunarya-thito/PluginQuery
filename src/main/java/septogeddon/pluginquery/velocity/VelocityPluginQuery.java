@@ -3,6 +3,7 @@ package septogeddon.pluginquery.velocity;
 import com.google.inject.Inject;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.PluginMessageEvent;
+import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
@@ -31,7 +32,10 @@ import java.nio.file.Path;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 public class VelocityPluginQuery implements QueryListener {
 
@@ -82,15 +86,12 @@ public class VelocityPluginQuery implements QueryListener {
         return null;
     }
 
-    public void initializeConnectors() {
-        disabling = false;
-        QueryMessenger messenger = PluginQuery.getMessenger();
-        getServer().getAllServers().forEach(server -> {
-            InetSocketAddress address = server.getServerInfo().getAddress();
-            getLogger().info("Connecting to server \"" + server.getServerInfo().getName() + "\"...");
+    private void connectServer(QueryMessenger messenger, RegisteredServer server, InetSocketAddress address) {
+        synchronized (this) {
             QueryConnection conn = messenger.newConnection(address);
             conn.getMetadata().setData(REGISTERED_SERVER, server);
             QueryFuture<QueryConnection> future = conn.connect();
+            conn.getEventBus().registerListener(this);
             future.addListener(connection -> {
                 if (connection.isSuccess()) {
                     getLogger().info("Successfully connected to server \"" + server.getServerInfo().getName() + "\"!");
@@ -98,7 +99,19 @@ public class VelocityPluginQuery implements QueryListener {
                     getLogger().error("Failed to connect to server \"" + server.getServerInfo().getName() + "\"");
                 }
             });
-        });
+        }
+    }
+
+    public void initializeConnectors() {
+        disabling = false;
+        QueryMessenger messenger = PluginQuery.getMessenger();
+        synchronized (this) {
+            getServer().getAllServers().forEach(server -> {
+                InetSocketAddress address = server.getServerInfo().getAddress();
+                getLogger().info("Connecting to server \"" + server.getServerInfo().getName() + "\"...");
+                connectServer(messenger, server, address);
+            });
+        }
         getServer().getChannelRegistrar().register(MODERN_IDENTIFIER);
     }
 

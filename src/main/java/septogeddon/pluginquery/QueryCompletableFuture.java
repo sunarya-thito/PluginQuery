@@ -1,9 +1,11 @@
 package septogeddon.pluginquery;
 
+import septogeddon.pluginquery.api.QueryFuture;
 import septogeddon.pluginquery.utils.QueryUtil;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 public class QueryCompletableFuture<T> extends QueryFutureAdapter<T> {
 
