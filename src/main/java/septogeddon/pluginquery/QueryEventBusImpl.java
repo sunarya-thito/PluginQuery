@@ -1,12 +1,17 @@
 package septogeddon.pluginquery;
 
 import septogeddon.pluginquery.api.QueryConnection;
+import septogeddon.pluginquery.api.QueryContext;
 import septogeddon.pluginquery.api.QueryEventBus;
 import septogeddon.pluginquery.api.QueryListener;
+import septogeddon.pluginquery.message.QueryGetActiveConnections;
+import septogeddon.pluginquery.message.QueryObject;
+import septogeddon.pluginquery.message.QuerySendActiveConnections;
 import septogeddon.pluginquery.utils.QueryUtil;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class QueryEventBusImpl implements QueryEventBus {
 

@@ -11,9 +11,9 @@ import septogeddon.pluginquery.utils.Debug;
 import septogeddon.pluginquery.utils.QueryUtil;
 
 import java.net.SocketAddress;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class InjectedQueryConnection implements QueryConnection {
 
@@ -35,6 +35,13 @@ public class InjectedQueryConnection implements QueryConnection {
             }
         };
         prepareChannel();
+    }
+
+    @Override
+    public QueryFuture<Set<QueryConnection>> fetchActiveConnections() {
+        QueryCompletableFuture<Set<QueryConnection>> listQueryCompletableFuture = new QueryCompletableFuture<>();
+        listQueryCompletableFuture.complete(new HashSet<>(messenger.getActiveConnections()));
+        return listQueryCompletableFuture;
     }
 
     protected void connectionDisconnected() {

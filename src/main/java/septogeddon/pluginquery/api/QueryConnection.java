@@ -3,6 +3,9 @@ package septogeddon.pluginquery.api;
 import io.netty.channel.Channel;
 
 import java.net.SocketAddress;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Connection instance
@@ -21,6 +24,13 @@ public interface QueryConnection {
      * @return Connection Socket Address
      */
     SocketAddress getAddress();
+
+    /**
+     * Get the active connection addresses from the other side of this connection as dispatcher connections,
+     * where you can send query directly to the connection without having to redirect it on this connection.
+     * @return QueryFuture that results a set of active connection addresses
+     */
+    QueryFuture<Set<QueryConnection>> fetchActiveConnections();
 
     /**
      * Check if the connection is connected
