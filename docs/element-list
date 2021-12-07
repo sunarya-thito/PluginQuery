@@ -1,0 +1,16 @@
+septogeddon.pluginquery
+septogeddon.pluginquery.api
+septogeddon.pluginquery.bungeecord
+septogeddon.pluginquery.bungeecord.event
+septogeddon.pluginquery.channel
+septogeddon.pluginquery.http
+septogeddon.pluginquery.http.headertype
+septogeddon.pluginquery.library.forwarder
+septogeddon.pluginquery.library.remote
+septogeddon.pluginquery.message
+septogeddon.pluginquery.netty
+septogeddon.pluginquery.spigot
+septogeddon.pluginquery.spigot.event
+septogeddon.pluginquery.utils
+septogeddon.pluginquery.velocity
+septogeddon.pluginquery.velocity.event
