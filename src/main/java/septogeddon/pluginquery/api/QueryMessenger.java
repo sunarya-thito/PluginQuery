@@ -9,8 +9,8 @@ import java.util.Collection;
 /**
  * HUB for active connections
  * @author Thito Yalasatria Sunarya
- *
  */
+// add USE
 public interface QueryMessenger {
 
     /**
