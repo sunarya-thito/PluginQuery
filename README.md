@@ -13,7 +13,7 @@ Allows spigot/bungeecord/velocity plugins to send plugin message without having 
 
 ## Dependencies Setup
 ### Maven
-[![Release](https://jitpack.io/v/sunarya-thito/PluginQuery.svg)](https://jitpack.io/sunarya-thito/PluginQuery)
+[![Release](https://jitpack.io/v/sunarya-thito/PluginQuery.svg)](https://jitpack.io/#sunarya-thito/PluginQuery)
 ```xml
 <repository>
     <id>jitpack.io</id>
