@@ -22,14 +22,24 @@
       <option name="url" value="https://repository.jboss.org/nexus/content/repositories/public/" />
     </remote-repository>
     <remote-repository>
-      <option name="id" value="velocity" />
-      <option name="name" value="velocity" />
-      <option name="url" value="https://nexus.velocitypowered.com/repository/maven-public/" />
+      <option name="id" value="bungeecord-repo" />
+      <option name="name" value="bungeecord-repo" />
+      <option name="url" value="https://oss.sonatype.org/content/repositories/snapshots" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="papermc" />
+      <option name="name" value="papermc" />
+      <option name="url" value="https://repo.papermc.io/repository/maven-public/" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="nms-repo" />
       <option name="name" value="nms-repo" />
       <option name="url" value="https://repo.codemc.org/repository/nms/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="velocity" />
+      <option name="name" value="velocity" />
+      <option name="url" value="https://nexus.velocitypowered.com/repository/maven-public/" />
     </remote-repository>
   </component>
 </project>

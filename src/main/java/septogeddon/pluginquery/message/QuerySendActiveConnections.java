@@ -5,7 +5,7 @@ import java.util.List;
 
 public class QuerySendActiveConnections extends QueryObject {
     private static final long serialVersionUID = 1L;
-    private List<SocketAddress> addresses;
+    private final List<SocketAddress> addresses;
 
     public QuerySendActiveConnections(List<SocketAddress> addresses) {
         this.addresses = addresses;

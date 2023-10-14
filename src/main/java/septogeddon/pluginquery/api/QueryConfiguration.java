@@ -28,13 +28,13 @@ public interface QueryConfiguration {
     /**
      * Load configuration from a file (YAML)
      *
-     * @param file
+     * @param file the file
      */
     void loadConfiguration(File file) throws IOException;
 
     /**
      * Dump configuration into a file (YAML)
-     * @param file
+     * @param file the file
      */
     void saveConfiguration(File file) throws IOException;
 

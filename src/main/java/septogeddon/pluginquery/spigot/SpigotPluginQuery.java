@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.security.Key;
 import java.util.List;
 import java.util.Set;
@@ -72,7 +73,25 @@ public class SpigotPluginQuery extends JavaPlugin implements QueryMessageListene
             // TODO Check latebind
             Object craftserver = Bukkit.getServer();
             Object server = craftserver.getClass().getMethod("getServer").invoke(craftserver);
-            Object serverConnection = server.getClass().getMethod("getServerConnection").invoke(server);
+            Method getServerConnection = null;
+            try {
+                getServerConnection = server.getClass().getMethod("getServerConnection");
+            } catch (NoSuchMethodException e) {
+                try {
+                    getServerConnection = server.getClass().getMethod("getConnection");
+                } catch (NoSuchMethodException e1) {
+                    for (Method m : server.getClass().getMethods()) {
+                        if (m.getReturnType().getSimpleName().equals("ServerConnection")) {
+                            getServerConnection = m;
+                            break;
+                        }
+                    }
+                    if (getServerConnection == null) {
+                        throw e1;
+                    }
+                }
+            }
+            Object serverConnection = getServerConnection.invoke(server);
             Field[] decl = serverConnection.getClass().getDeclaredFields();
             for (Field f : decl) {
                 if (f.getType().equals(List.class)) {

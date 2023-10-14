@@ -6,7 +6,7 @@
 
     <groupId>septogeddon.pluginquery</groupId>
     <artifactId>pluginquery</artifactId>
-    <version>1.0.43</version>
+    <version>1.0.44</version>
 
     <distributionManagement>
         <repository>
@@ -24,8 +24,39 @@
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
             </resource>
+            <resource>
+                <directory>src/main/java/septogeddon/pluginquery/velocity</directory>
+                <filtering>true</filtering>
+            </resource>
         </resources>
         <plugins>
+            <plugin>
+                <groupId>com.google.code.maven-replacer-plugin</groupId>
+                <artifactId>replacer</artifactId>
+                <version>1.5.3</version>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>replace</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <includes>
+                        <include>${project.basedir}/src/main/java/septogeddon/pluginquery/velocity/VelocityPluginQuery.java</include>
+                    </includes>
+                    <replacements>
+                        <replacement>
+                            <token>version = ".*"</token>
+                            <value>version = "${project.version}"</value>
+                        </replacement>
+                    </replacements>
+                    <regex>
+                        true
+                    </regex>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -46,23 +77,13 @@
                         <configuration>
                             <target>
                                 <copy file="${project.build.directory}/${project.build.finalName}.jar"
-                                      todir="D:/Servers/1.8/plugins"/>
+                                      todir="${project.basedir}/test-server/velocity/plugins"/>
                                 <copy file="${project.build.directory}/${project.build.finalName}.jar"
-                                      todir="D:/Servers/1.13.2/plugins"/>
+                                      todir="${project.basedir}/test-server/spigot/plugins"/>
                                 <copy file="${project.build.directory}/${project.build.finalName}.jar"
-                                      todir="D:/Servers/1.17/plugins"/>
+                                      todir="${project.basedir}/test-server/bungeecord/plugins"/>
                                 <copy file="${project.build.directory}/${project.build.finalName}.jar"
-                                      todir="D:/Servers/Purpur 1.17/plugins"/>
-                                <copy file="${project.build.directory}/${project.build.finalName}.jar"
-                                      todir="D:/Servers/1.16/plugins"/>
-                                <copy file="${project.build.directory}/${project.build.finalName}.jar"
-                                      todir="D:/Servers/BungeeCord/plugins"/>
-                                <copy file="${project.build.directory}/${project.build.finalName}.jar"
-                                      todir="D:/Servers/Velocity/plugins"/>
-                                <copy file="${project.build.directory}/${project.build.finalName}.jar"
-                                      todir="D:/Servers/Airplane 1.17/plugins"/>
-                                <copy file="${project.build.directory}/${project.build.finalName}.jar"
-                                      todir="D:/Servers/Airplane 1.17 - Copy/plugins"/>
+                                      todir="${project.basedir}/test-server/paper/plugins"/>
                             </target>
                         </configuration>
                         <goals>
@@ -75,8 +96,8 @@
     </build>
     <repositories>
         <repository>
-            <id>velocity</id>
-            <url>https://nexus.velocitypowered.com/repository/maven-public/</url>
+            <id>papermc</id>
+            <url>https://repo.papermc.io/repository/maven-public/</url>
         </repository>
         <repository>
             <id>nms-repo</id>
@@ -84,7 +105,7 @@
         </repository>
         <repository>
             <id>bungeecord-repo</id>
-            <url>https://ci.lucko.me/plugin/repository/everything/</url>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
         </repository>
     </repositories>
     <dependencies>
@@ -97,21 +118,27 @@
         <dependency>
             <groupId>com.velocitypowered</groupId>
             <artifactId>velocity-api</artifactId>
-            <version>3.0.1</version>
+            <version>3.2.0-SNAPSHOT</version>
             <scope>provided</scope>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/io.netty/netty-all -->
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+            <version>4.1.100.Final</version>
         </dependency>
         <dependency>
             <groupId>net.md-5</groupId>
-            <artifactId>bungeecord-proxy</artifactId>
-            <version>1.18-R0.1-SNAPSHOT</version>
+            <artifactId>bungeecord-api</artifactId>
+            <version>1.19-R0.1-SNAPSHOT</version>
             <type>jar</type>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>net.md-5</groupId>
             <artifactId>bungeecord-api</artifactId>
-            <version>1.17-R0.1-SNAPSHOT</version>
-            <type>jar</type>
+            <version>1.19-R0.1-SNAPSHOT</version>
+            <type>javadoc</type>
             <scope>provided</scope>
         </dependency>
     </dependencies>

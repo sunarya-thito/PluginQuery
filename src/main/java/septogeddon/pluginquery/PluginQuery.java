@@ -9,7 +9,7 @@ public class PluginQuery {
 
     /**
      * Get the {@link QueryMessenger} instance
-     * @return
+     * @return the instance
      */
     public static QueryMessenger getMessenger() {
         QueryUtil.illegalState(messengerInstance == null, "not initialized");
@@ -18,7 +18,7 @@ public class PluginQuery {
 
     /**
      * Set the {@link QueryMessenger} instance. Will throw an exception if the instance is already set.
-     * @param messenger
+     * @param messenger the instance
      */
     public static void setMessenger(QueryMessenger messenger) {
         QueryUtil.illegalState(messengerInstance != null, "instance already set");
